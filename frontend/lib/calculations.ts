@@ -53,7 +53,7 @@ export function calculateCustomerSummary(customers: CustomerItem[]): CustomerSum
 }
 
 export function calculateTotalAchieved(periods: PeriodItem[]): PeriodMetrics {
-  const weekly = periods.filter(p => p.period_index >= 1 && p.period_index <= 5);
+  const weekly = periods.filter(p => p.period_index >= 1 && p.period_index <= 6);
 
   const new_sales = weekly.reduce((sum, p) => sum + Number(p.new_sales || 0), 0);
   const tb_amount = weekly.reduce((sum, p) => sum + Number(p.tb_amount || 0), 0);
@@ -78,6 +78,11 @@ export function calculateTotalAchieved(periods: PeriodItem[]): PeriodMetrics {
     outdoor_visits: weekly.reduce((sum, p) => sum + Number(p.outdoor_visits || 0), 0),
     indoor_cx: weekly.reduce((sum, p) => sum + Number(p.indoor_cx || 0), 0),
     meeting_hours: Math.round(weekly.reduce((sum, p) => sum + Number(p.meeting_hours || 0), 0) * 10) / 10,
+    hold: weekly.reduce((sum, p) => sum + Number(p.hold || 0), 0),
+    cancel: weekly.reduce((sum, p) => sum + Number(p.cancel || 0), 0),
+    sold_fair_leads: weekly.reduce((sum, p) => sum + Number(p.sold_fair_leads || 0), 0),
+    sold_fb_leads: weekly.reduce((sum, p) => sum + Number(p.sold_fb_leads || 0), 0),
+    sold_other_leads: weekly.reduce((sum, p) => sum + Number(p.sold_other_leads || 0), 0),
   };
 }
 
@@ -107,5 +112,10 @@ export function calculateAchievementPct(achieved: PeriodMetrics, target?: Period
     outdoor_visits: Math.round(safePct(achieved.outdoor_visits, Number(target?.outdoor_visits || 0))),
     indoor_cx: Math.round(safePct(achieved.indoor_cx, Number(target?.indoor_cx || 0))),
     meeting_hours: safePct(achieved.meeting_hours, Number(target?.meeting_hours || 0)),
+    hold: Math.round(safePct(achieved.hold || 0, Number(target?.hold || 0))),
+    cancel: Math.round(safePct(achieved.cancel || 0, Number(target?.cancel || 0))),
+    sold_fair_leads: Math.round(safePct(achieved.sold_fair_leads || 0, Number(target?.sold_fair_leads || 0))),
+    sold_fb_leads: Math.round(safePct(achieved.sold_fb_leads || 0, Number(target?.sold_fb_leads || 0))),
+    sold_other_leads: Math.round(safePct(achieved.sold_other_leads || 0, Number(target?.sold_other_leads || 0))),
   };
 }

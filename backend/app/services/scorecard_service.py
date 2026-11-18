@@ -38,10 +38,10 @@ class ScorecardService:
         for p in periods:
             if p.period_index == 0:
                 target_period = p
-            elif 1 <= p.period_index <= 5:
+            elif 1 <= p.period_index <= 6:
                 weekly_periods.append(p)
 
-        # Sum weekly periods 1-5
+        # Sum weekly periods 1-6
         achieved_new_sales = sum((p.new_sales or Decimal("0.00")) for p in weekly_periods)
         achieved_tb_amount = sum((p.tb_amount or Decimal("0.00")) for p in weekly_periods)
         achieved_emi_amount = sum((p.emi_amount or Decimal("0.00")) for p in weekly_periods)
@@ -62,6 +62,12 @@ class ScorecardService:
         achieved_indoor = sum((p.indoor_cx or 0) for p in weekly_periods)
         achieved_hours = sum((p.meeting_hours or Decimal("0.0")) for p in weekly_periods)
 
+        achieved_hold = sum((getattr(p, 'hold', 0) or 0) for p in weekly_periods)
+        achieved_cancel = sum((getattr(p, 'cancel', 0) or 0) for p in weekly_periods)
+        achieved_sold_fair = sum((getattr(p, 'sold_fair_leads', 0) or 0) for p in weekly_periods)
+        achieved_sold_fb = sum((getattr(p, 'sold_fb_leads', 0) or 0) for p in weekly_periods)
+        achieved_sold_other = sum((getattr(p, 'sold_other_leads', 0) or 0) for p in weekly_periods)
+
         total_achieved = PeriodMetrics(
             new_sales=achieved_new_sales,
             tb_amount=achieved_tb_amount,
@@ -77,7 +83,12 @@ class ScorecardService:
             connected_calls=achieved_connected,
             outdoor_visits=achieved_outdoor,
             indoor_cx=achieved_indoor,
-            meeting_hours=achieved_hours
+            meeting_hours=achieved_hours,
+            hold=achieved_hold,
+            cancel=achieved_cancel,
+            sold_fair_leads=achieved_sold_fair,
+            sold_fb_leads=achieved_sold_fb,
+            sold_other_leads=achieved_sold_other
         )
 
         # Safe achievement % computation against target (period 0)
@@ -114,7 +125,12 @@ class ScorecardService:
                 connected_calls=int(safe_pct(achieved_connected, target_period.connected_calls or 0)),
                 outdoor_visits=int(safe_pct(achieved_outdoor, target_period.outdoor_visits or 0)),
                 indoor_cx=int(safe_pct(achieved_indoor, target_period.indoor_cx or 0)),
-                meeting_hours=safe_pct(achieved_hours, target_period.meeting_hours or 0)
+                meeting_hours=safe_pct(achieved_hours, target_period.meeting_hours or 0),
+                hold=int(safe_pct(achieved_hold, getattr(target_period, 'hold', 0) or 0)),
+                cancel=int(safe_pct(achieved_cancel, getattr(target_period, 'cancel', 0) or 0)),
+                sold_fair_leads=int(safe_pct(achieved_sold_fair, getattr(target_period, 'sold_fair_leads', 0) or 0)),
+                sold_fb_leads=int(safe_pct(achieved_sold_fb, getattr(target_period, 'sold_fb_leads', 0) or 0)),
+                sold_other_leads=int(safe_pct(achieved_sold_other, getattr(target_period, 'sold_other_leads', 0) or 0))
             )
         else:
             achievement_pct = PeriodMetrics()
@@ -187,8 +203,8 @@ class ScorecardService:
         """Constructs an initialized empty DRAFT scorecard structure when none exists."""
         normalized_month = ScorecardService.normalize_month(target_month)
         
-        # 0=Target, 1-5=Periods
-        periods = [PeriodItem(period_index=i) for i in range(6)]
+        # 0=Target, 1..6=Period intervals (Till 5th, Till 10th, Till 15th, Till 20th, Till 25th, Till 30/31st)
+        periods = [PeriodItem(period_index=i) for i in range(7)]
         total_achieved, achievement_pct = ScorecardService.calculate_period_totals(periods)
         customer_summary = CustomerSummary()
 

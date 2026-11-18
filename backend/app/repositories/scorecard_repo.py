@@ -152,7 +152,7 @@ class ScorecardRepository:
             # Map incoming periods by index
             incoming_periods_by_idx = {p.period_index: p for p in data.periods}
 
-            for idx in range(6):
+            for idx in range(7):
                 incoming_p = incoming_periods_by_idx.get(idx)
                 period_obj = existing_periods_map.get(idx)
 
@@ -187,7 +187,12 @@ class ScorecardRepository:
                         connected_calls=incoming_p.connected_calls if incoming_p else 0,
                         outdoor_visits=incoming_p.outdoor_visits if incoming_p else 0,
                         indoor_cx=incoming_p.indoor_cx if incoming_p else 0,
-                        meeting_hours=incoming_p.meeting_hours if incoming_p else Decimal("0.0")
+                        meeting_hours=incoming_p.meeting_hours if incoming_p else Decimal("0.0"),
+                        hold=incoming_p.hold if incoming_p else 0,
+                        cancel=incoming_p.cancel if incoming_p else 0,
+                        sold_fair_leads=incoming_p.sold_fair_leads if incoming_p else 0,
+                        sold_fb_leads=incoming_p.sold_fb_leads if incoming_p else 0,
+                        sold_other_leads=incoming_p.sold_other_leads if incoming_p else 0
                     )
                     db.add(period_obj)
                 else:
@@ -209,6 +214,11 @@ class ScorecardRepository:
                         period_obj.outdoor_visits = incoming_p.outdoor_visits
                         period_obj.indoor_cx = incoming_p.indoor_cx
                         period_obj.meeting_hours = incoming_p.meeting_hours
+                        period_obj.hold = incoming_p.hold
+                        period_obj.cancel = incoming_p.cancel
+                        period_obj.sold_fair_leads = incoming_p.sold_fair_leads
+                        period_obj.sold_fb_leads = incoming_p.sold_fb_leads
+                        period_obj.sold_other_leads = incoming_p.sold_other_leads
 
             # -------------------------------------------------------------
             # Customers Upsert / Replace
@@ -227,6 +237,8 @@ class ScorecardRepository:
                     cust_obj.paid_amount = cust_in.paid_amount
                     cust_obj.unpaid_amount = cust_in.unpaid_amount
                     cust_obj.collection_date = cust_in.collection_date
+                    cust_obj.next_collection_date = cust_in.next_collection_date
+                    cust_obj.next_collection_date_2 = cust_in.next_collection_date_2
                     cust_obj.date_1 = cust_in.date_1
                     cust_obj.date_2 = cust_in.date_2
                     cust_obj.in_out_plan = cust_in.in_out_plan
@@ -248,6 +260,8 @@ class ScorecardRepository:
                         paid_amount=cust_in.paid_amount,
                         unpaid_amount=cust_in.unpaid_amount,
                         collection_date=cust_in.collection_date,
+                        next_collection_date=cust_in.next_collection_date,
+                        next_collection_date_2=cust_in.next_collection_date_2,
                         date_1=cust_in.date_1,
                         date_2=cust_in.date_2,
                         in_out_plan=cust_in.in_out_plan,
@@ -364,14 +378,19 @@ class ScorecardRepository:
                 connected_calls=p.connected_calls,
                 outdoor_visits=p.outdoor_visits,
                 indoor_cx=p.indoor_cx,
-                meeting_hours=p.meeting_hours
+                meeting_hours=p.meeting_hours,
+                hold=getattr(p, 'hold', 0) or 0,
+                cancel=getattr(p, 'cancel', 0) or 0,
+                sold_fair_leads=getattr(p, 'sold_fair_leads', 0) or 0,
+                sold_fb_leads=getattr(p, 'sold_fb_leads', 0) or 0,
+                sold_other_leads=getattr(p, 'sold_other_leads', 0) or 0
             )
             for p in sorted(scorecard.periods, key=lambda x: x.period_index)
         ]
 
-        # Ensure all 6 periods exist in response
+        # Ensure all 7 periods exist in response (0=Target, 1..6=Period intervals Till 5th..Till 30/31st)
         existing_indices = {p.period_index for p in period_items}
-        for i in range(6):
+        for i in range(7):
             if i not in existing_indices:
                 period_items.append(PeriodItem(period_index=i))
         period_items.sort(key=lambda x: x.period_index)
@@ -383,6 +402,8 @@ class ScorecardRepository:
                 paid_amount=c.paid_amount,
                 unpaid_amount=c.unpaid_amount,
                 collection_date=c.collection_date,
+                next_collection_date=getattr(c, 'next_collection_date', None),
+                next_collection_date_2=getattr(c, 'next_collection_date_2', None),
                 date_1=c.date_1,
                 date_2=c.date_2,
                 in_out_plan=c.in_out_plan,

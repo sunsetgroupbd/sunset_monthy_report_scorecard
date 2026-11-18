@@ -25,7 +25,7 @@ def test_empty_scorecard_initialization(client):
 
     assert data["status"] == "DRAFT"
     assert data["id"] is None
-    assert len(data["periods"]) == 6
+    assert len(data["periods"]) == 7
     assert data["periods"][0]["period_index"] == 0  # Target
     assert data["periods"][1]["period_index"] == 1  # P1
     assert data["can_edit"] is True

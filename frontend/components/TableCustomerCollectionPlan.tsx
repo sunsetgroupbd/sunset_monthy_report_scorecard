@@ -34,6 +34,8 @@ const EMPTY_FORM: CustomerItem = {
   paid_amount: 0,
   unpaid_amount: 0,
   collection_date: '',
+  next_collection_date: '',
+  next_collection_date_2: '',
   date_1: '',
   date_2: '',
   in_out_plan: 'In Plan',
@@ -345,7 +347,7 @@ export default function TableCustomerCollectionPlan({
                 </div>
               </div>
 
-              {/* Row 4: Dates (Collection Date, Date 1, Date 2) */}
+              {/* Row 4: Dates (Collection Date, Next Collec Dates, Date 1, Date 2) */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -361,7 +363,33 @@ export default function TableCustomerCollectionPlan({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Date 1
+                    Next Collec Date (1)
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.next_collection_date || ''}
+                    onChange={(e) => handleFormChange('next_collection_date', e.target.value)}
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Next Collec Date (2)
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.next_collection_date_2 || ''}
+                    onChange={(e) => handleFormChange('next_collection_date_2', e.target.value)}
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Date-1
                   </label>
                   <input
                     type="date"
@@ -497,9 +525,11 @@ export default function TableCustomerCollectionPlan({
               <th className="py-2.5 px-2.5 min-w-[100px] text-right">Paid (BDT)</th>
               <th className="py-2.5 px-2.5 min-w-[100px] text-right">Unpaid (BDT)</th>
               <th className="py-2.5 px-2.5 min-w-[110px]">Collection Date</th>
+              <th className="py-2.5 px-2.5 min-w-[110px]">Next Collec Date</th>
+              <th className="py-2.5 px-2.5 min-w-[110px]">Next Collec Date 2</th>
+              <th className="py-2.5 px-2 min-w-[95px]">In/Out Plan</th>
               <th className="py-2.5 px-2 min-w-[95px]">Date 1</th>
               <th className="py-2.5 px-2 min-w-[95px]">Date 2</th>
-              <th className="py-2.5 px-2 min-w-[95px]">In/Out Plan</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right">New Sales</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right">TB Amount</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right">EMI Amount</th>
@@ -516,7 +546,7 @@ export default function TableCustomerCollectionPlan({
           <tbody className="divide-y divide-slate-100 font-medium">
             {customers.length === 0 ? (
               <tr>
-                <td colSpan={16} className="py-8 text-center text-slate-400 text-xs">
+                <td colSpan={18} className="py-8 text-center text-slate-400 text-xs">
                   No prediction payment entries yet. Click &quot;Add Prediction Payment&quot; above to open the entry form.
                 </td>
               </tr>
@@ -551,14 +581,14 @@ export default function TableCustomerCollectionPlan({
                       {c.collection_date || '—'}
                     </td>
 
-                    {/* Date 1 */}
-                    <td className="py-2 px-2 text-slate-500 text-[11px]">
-                      {c.date_1 || '—'}
+                    {/* Next Collection Date 1 */}
+                    <td className="py-2 px-2.5 text-slate-600 text-[11px]">
+                      {c.next_collection_date || '—'}
                     </td>
 
-                    {/* Date 2 */}
-                    <td className="py-2 px-2 text-slate-500 text-[11px]">
-                      {c.date_2 || '—'}
+                    {/* Next Collection Date 2 */}
+                    <td className="py-2 px-2.5 text-slate-600 text-[11px]">
+                      {c.next_collection_date_2 || '—'}
                     </td>
 
                     {/* In/Out Plan */}
@@ -570,6 +600,16 @@ export default function TableCustomerCollectionPlan({
                       }`}>
                         {c.in_out_plan || 'In Plan'}
                       </span>
+                    </td>
+
+                    {/* Date 1 */}
+                    <td className="py-2 px-2 text-slate-500 text-[11px]">
+                      {c.date_1 || '—'}
+                    </td>
+
+                    {/* Date 2 */}
+                    <td className="py-2 px-2 text-slate-500 text-[11px]">
+                      {c.date_2 || '—'}
                     </td>
 
                     {/* New Sales */}
@@ -653,7 +693,7 @@ export default function TableCustomerCollectionPlan({
                 <td className="py-2.5 px-2.5 text-right text-rose-800">
                   {formatBDT(summary.total_unpaid)}
                 </td>
-                <td colSpan={4}></td>
+                <td colSpan={6}></td>
                 <td className="py-2.5 px-2.5 text-right">
                   {formatBDT(customers.reduce((acc, c) => acc + (Number(c.new_sales_amount) || 0), 0))}
                 </td>

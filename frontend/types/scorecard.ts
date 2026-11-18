@@ -58,11 +58,18 @@ export interface PeriodMetrics {
   outdoor_visits: number;
   indoor_cx: number;
   meeting_hours: number;
+
+  // New fields from physical scorecard
+  hold?: number;
+  cancel?: number;
+  sold_fair_leads?: number;
+  sold_fb_leads?: number;
+  sold_other_leads?: number;
 }
 
 export interface PeriodItem extends PeriodMetrics {
   id?: string;
-  period_index: number; // 0=Target, 1..5=Weekly Periods
+  period_index: number; // 0=Target, 1..6=Weekly Periods (Till 5th..Till 30/31st)
 }
 
 export interface CustomerItem {
@@ -71,6 +78,8 @@ export interface CustomerItem {
   paid_amount: number;
   unpaid_amount: number;
   collection_date?: string;
+  next_collection_date?: string;
+  next_collection_date_2?: string;
   date_1?: string;
   date_2?: string;
   in_out_plan?: string;

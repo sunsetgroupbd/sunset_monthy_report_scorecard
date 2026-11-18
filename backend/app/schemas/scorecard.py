@@ -29,12 +29,19 @@ class PeriodMetrics(BaseModel):
     indoor_cx: int = Field(default=0, ge=0)
     meeting_hours: Decimal = Field(default=Decimal("0.0"), ge=0)
 
+    # Lead Pipeline & Results (From Scorecard Report)
+    hold: int = Field(default=0, ge=0)
+    cancel: int = Field(default=0, ge=0)
+    sold_fair_leads: int = Field(default=0, ge=0)
+    sold_fb_leads: int = Field(default=0, ge=0)
+    sold_other_leads: int = Field(default=0, ge=0)
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class PeriodItem(PeriodMetrics):
     id: Optional[str] = None
-    period_index: int = Field(..., ge=0, le=5, description="0=Target, 1=P1 (1-7), 2=P2 (8-14), 3=P3 (15-21), 4=P4 (22-28), 5=P5 (29-End)")
+    period_index: int = Field(..., ge=0, le=10, description="0=Target, 1..6=Period intervals (Till 5th..30/31st), 7..9=Prior Months")
 
 
 class CustomerItem(BaseModel):
@@ -43,6 +50,8 @@ class CustomerItem(BaseModel):
     paid_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     unpaid_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     collection_date: Optional[date] = None
+    next_collection_date: Optional[date] = None
+    next_collection_date_2: Optional[date] = None
     date_1: Optional[date] = None
     date_2: Optional[date] = None
     in_out_plan: Optional[str] = Field(default="In Plan", max_length=100)

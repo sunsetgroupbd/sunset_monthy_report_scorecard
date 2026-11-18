@@ -27,12 +27,13 @@ interface PerformanceByPeriodProps {
 }
 
 const PERIOD_LABELS: Record<number, { title: string; subtitle: string }> = {
-  0: { title: 'Monthly Target', subtitle: 'Target Metrics' },
-  1: { title: 'Period 1', subtitle: 'Day 1–7' },
-  2: { title: 'Period 2', subtitle: 'Day 8–14' },
-  3: { title: 'Period 3', subtitle: 'Day 15–21' },
-  4: { title: 'Period 4', subtitle: 'Day 22–28' },
-  5: { title: 'Period 5', subtitle: 'Day 29–End' },
+  0: { title: 'TG (Target)', subtitle: 'Monthly Benchmark' },
+  1: { title: 'Till 5th', subtitle: 'Day 1–5' },
+  2: { title: 'Till 10th', subtitle: 'Day 6–10' },
+  3: { title: 'Till 15th', subtitle: 'Day 11–15' },
+  4: { title: 'Till 20th', subtitle: 'Day 16–20' },
+  5: { title: 'Till 25th', subtitle: 'Day 21–25' },
+  6: { title: 'Till 30/31st', subtitle: 'Day 26–End' },
 };
 
 export default function TablePerformanceByPeriod({
@@ -42,7 +43,7 @@ export default function TablePerformanceByPeriod({
 }: PerformanceByPeriodProps) {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({
-    0: true, 1: true, 2: false, 3: false, 4: false, 5: false
+    0: true, 1: true, 2: false, 3: false, 4: false, 5: false, 6: false
   });
   const [overrideModalPeriod, setOverrideModalPeriod] = useState<number | null>(null);
   const [overrideInputVal, setOverrideInputVal] = useState<string>('');
@@ -387,8 +388,8 @@ export default function TablePerformanceByPeriod({
                 </tr>
               )}
 
-              {/* Weekly Periods (1 through 5) */}
-              {[1, 2, 3, 4, 5].map((idx) => {
+              {/* Weekly Periods (Till 5th through Till 30/31st) */}
+              {[1, 2, 3, 4, 5, 6].map((idx) => {
                 const period = periods.find(p => p.period_index === idx) || { period_index: idx } as PeriodItem;
                 const totalCol = calculatePeriodTotalCollection(period);
                 const hasOverride = period.total_collection_override !== null && period.total_collection_override !== undefined;
@@ -654,7 +655,7 @@ export default function TablePerformanceByPeriod({
         /* 2. CARD MODE (Expandable period cards for mobile)            */
         /* ------------------------------------------------------------- */
         <div className="space-y-4">
-          {[0, 1, 2, 3, 4, 5].map((idx) => {
+          {[0, 1, 2, 3, 4, 5, 6].map((idx) => {
             const period = periods.find(p => p.period_index === idx) || { period_index: idx } as PeriodItem;
             const totalCol = calculatePeriodTotalCollection(period);
             const isTarget = idx === 0;

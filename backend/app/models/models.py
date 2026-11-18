@@ -135,6 +135,13 @@ class ManualScorecardPeriod(Base):
     indoor_cx = Column(Integer, nullable=False, default=0)
     meeting_hours = Column(Numeric(6, 2), nullable=False, default=0.0)
 
+    # Lead Pipeline & Results (From Scorecard Report)
+    hold = Column(Integer, nullable=True, default=0)
+    cancel = Column(Integer, nullable=True, default=0)
+    sold_fair_leads = Column(Integer, nullable=True, default=0)
+    sold_fb_leads = Column(Integer, nullable=True, default=0)
+    sold_other_leads = Column(Integer, nullable=True, default=0)
+
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
@@ -154,6 +161,8 @@ class ManualScorecardCustomer(Base):
     paid_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     unpaid_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     collection_date = Column(Date, nullable=True)
+    next_collection_date = Column(Date, nullable=True)
+    next_collection_date_2 = Column(Date, nullable=True)
     date_1 = Column(Date, nullable=True)
     date_2 = Column(Date, nullable=True)
     in_out_plan = Column(String(100), nullable=True)
