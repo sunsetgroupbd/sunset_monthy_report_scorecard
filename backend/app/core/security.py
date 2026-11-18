@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 async def verify_supabase_token(token: str) -> Dict[str, Any]:
     """
     Verifies a Supabase JWT access token.
-    1. Attempts HS256 decode using settings.JWT_SECRET if configured.
+    1. Attempts verification using JWKS (ES256/RS256/HS256) from SUPABASE_JWKS_URL.
     2. Falls back to calling Supabase Auth API /auth/v1/user.
+    3. Attempts HS256 decode using settings.JWT_SECRET if configured.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -20,7 +21,50 @@ async def verify_supabase_token(token: str) -> Dict[str, Any]:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # 1. Try decoding with JWT_SECRET if available
+    # 1. Try JWKS verification if jwks_url is set and not a placeholder
+    if settings.jwks_url and "your-supabase-project" not in settings.jwks_url:
+        try:
+            jwks_client = jwt.PyJWKClient(settings.jwks_url)
+            signing_key = jwks_client.get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["ES256", "RS256", "HS256"],
+                options={"verify_aud": False, "verify_signature": True}
+            )
+            user_id = payload.get("sub")
+            if user_id:
+                return {
+                    "id": user_id,
+                    "email": payload.get("email"),
+                    "role": payload.get("role", "authenticated"),
+                    "payload": payload
+                }
+        except Exception as e:
+            logger.debug(f"JWKS verification failed: {e}")
+
+    # 2. Try Supabase Auth API /auth/v1/user
+    if settings.SUPABASE_URL and "your-supabase-project" not in settings.SUPABASE_URL:
+        try:
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "apikey": settings.anon_key
+                }
+                url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/user"
+                response = await client.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "id": data.get("id"),
+                        "email": data.get("email"),
+                        "role": data.get("role", "authenticated"),
+                        "payload": data
+                    }
+        except Exception as e:
+            logger.debug(f"Supabase Auth API check error: {e}")
+
+    # 3. Try decoding with JWT_SECRET if available
     if settings.JWT_SECRET:
         try:
             payload = jwt.decode(
@@ -38,30 +82,9 @@ async def verify_supabase_token(token: str) -> Dict[str, Any]:
                     "payload": payload
                 }
         except jwt.PyJWTError as e:
-            logger.debug(f"JWT Secret verification failed, will try Supabase Auth API: {e}")
+            logger.debug(f"JWT Secret verification failed: {e}")
 
-    # 2. Try Supabase Auth API /auth/v1/user if SUPABASE_URL configured
-    if settings.SUPABASE_URL and not settings.SUPABASE_URL.startswith("https://your-supabase-project"):
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "apikey": settings.SUPABASE_ANON_KEY
-                }
-                url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/user"
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    return {
-                        "id": data.get("id"),
-                        "email": data.get("email"),
-                        "role": data.get("role", "authenticated"),
-                        "payload": data
-                    }
-        except Exception as e:
-            logger.error(f"Supabase Auth API check error: {e}")
-
-    # 3. For development/testing: try decoding unverified if secret is dummy
+    # 4. For development/testing: try decoding unverified if dev token
     try:
         unverified = jwt.decode(token, options={"verify_signature": False})
         user_id = unverified.get("sub")
