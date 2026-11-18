@@ -25,12 +25,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy backend application source
 COPY . .
 
+# Ensure local db file exists if fallback is used
+RUN touch /app/scorecard_local.db
+
 # Expose port 8002
 EXPOSE 8002
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8002/health || exit 1
 
 # Start FastAPI with Uvicorn on port 8002
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]

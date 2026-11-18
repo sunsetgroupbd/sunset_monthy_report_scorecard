@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Backend Service: FastAPI on port 8002
   m_backend:
     container_name: m_backend
     build:
@@ -14,40 +13,4 @@ services:
     environment:
       - PORT=8002
       - APP_TIMEZONE=Asia/Dhaka
-    volumes:
-      # Mount local SQLite database for data persistence between container runs
-      - ./backend/scorecard_local.db:/app/scorecard_local.db
     restart: unless-stopped
-    networks:
-      - scorecard_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  # Frontend Service: Next.js on port 3000 (Optional)
-  m_frontend:
-    container_name: m_frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8002/api/v1
-        - NEXT_PUBLIC_SUPABASE_URL=https://cdigidyfpjqlalnsacxp.supabase.co
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ALI35DxSGdo0oWvHNbP7wA_jPXgC0am
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8002/api/v1
-    depends_on:
-      m_backend:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - scorecard_network
-
-networks:
-  scorecard_network:
-    driver: bridge

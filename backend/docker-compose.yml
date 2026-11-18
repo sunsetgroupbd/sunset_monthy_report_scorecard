@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  m_backend:
+    container_name: m_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    environment:
+      - PORT=8002
+      - APP_TIMEZONE=Asia/Dhaka
+    restart: unless-stopped
