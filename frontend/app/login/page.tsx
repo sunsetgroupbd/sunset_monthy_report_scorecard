@@ -4,18 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { 
-  FileSpreadsheet, 
   Lock, 
   Mail, 
   ArrowRight, 
-  ShieldCheck, 
-  Users, 
-  CheckCircle2, 
   AlertCircle 
 } from 'lucide-react';
 
 export default function LoginPage() {
-  const { loginWithPassword, loginAsRole, loading } = useAuth();
+  const { loginWithPassword, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -29,18 +25,6 @@ export default function LoginPage() {
       await loginWithPassword(email, password);
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed. Please verify credentials.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleQuickDemo = async (demoEmail: string) => {
-    setErrorMsg('');
-    setSubmitting(true);
-    try {
-      await loginAsRole(demoEmail);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Quick login failed.');
     } finally {
       setSubmitting(false);
     }
@@ -130,69 +114,6 @@ export default function LoginPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Quick Demo Role Selector */}
-        <div className="pt-6 border-t border-slate-100">
-          <div className="text-center mb-3">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Quick Test Sign In by Role
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin@scorecard.com')}
-              disabled={submitting}
-              className="p-2.5 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100/70 text-rose-900 text-left transition"
-            >
-              <div className="font-bold flex items-center justify-between">
-                <span>Admin</span>
-                <span className="text-[10px] bg-rose-200 text-rose-800 px-1.5 py-0.2 rounded">Full</span>
-              </div>
-              <div className="text-[10px] text-rose-700 mt-0.5 truncate">admin@scorecard.com</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('tl@scorecard.com')}
-              disabled={submitting}
-              className="p-2.5 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100/70 text-purple-900 text-left transition"
-            >
-              <div className="font-bold flex items-center justify-between">
-                <span>Team Leader</span>
-                <span className="text-[10px] bg-purple-200 text-purple-800 px-1.5 py-0.2 rounded">TL</span>
-              </div>
-              <div className="text-[10px] text-purple-700 mt-0.5 truncate">tl@scorecard.com</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('co@scorecard.com')}
-              disabled={submitting}
-              className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100/70 text-blue-900 text-left transition"
-            >
-              <div className="font-bold flex items-center justify-between">
-                <span>Coordinator</span>
-                <span className="text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.2 rounded">CO</span>
-              </div>
-              <div className="text-[10px] text-blue-700 mt-0.5 truncate">co@scorecard.com</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('employee@scorecard.com')}
-              disabled={submitting}
-              className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/70 text-emerald-900 text-left transition"
-            >
-              <div className="font-bold flex items-center justify-between">
-                <span>Employee</span>
-                <span className="text-[10px] bg-emerald-200 text-emerald-800 px-1.5 py-0.2 rounded">Self</span>
-              </div>
-              <div className="text-[10px] text-emerald-700 mt-0.5 truncate">employee@scorecard.com</div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

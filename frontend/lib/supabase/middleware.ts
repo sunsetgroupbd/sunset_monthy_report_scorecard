@@ -47,10 +47,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Auth pages check: if user is already authenticated and visits login, redirect to dashboard
+  // Auth pages check: if user is already authenticated and visits login, redirect to manual-scorecard
   if (isAuthenticated && isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/manual-scorecard';
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect /dashboard or /admin/users directly to /manual-scorecard
+  if (pathname === '/dashboard' || pathname.startsWith('/admin')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/manual-scorecard';
     return NextResponse.redirect(url);
   }
 

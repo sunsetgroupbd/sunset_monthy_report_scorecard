@@ -159,7 +159,7 @@ function ScorecardPrintContent() {
         </div>
       </div>
 
-      {/* TABLE 1: PERFORMANCE BY PERIOD */}
+      {/* TABLE 1: WEEKLY ACTIVITY */}
       <div className="mb-4">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
           Table 1: Weekly Period Breakdown & Achievements
@@ -273,10 +273,10 @@ function ScorecardPrintContent() {
         </table>
       </div>
 
-      {/* TABLE 2: CUSTOMER COLLECTION PLAN */}
+      {/* TABLE 2: PREDICTION PAYMENT */}
       <div className="mb-4">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
-          Table 2: Customer Collection Plan
+          Table 2: Prediction Payment
         </h2>
         <table className="w-full border-collapse border border-slate-300 text-[9px]">
           <thead>

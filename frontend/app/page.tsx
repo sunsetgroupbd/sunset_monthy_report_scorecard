@@ -11,7 +11,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       if (profile) {
-        router.push('/dashboard');
+        router.push('/manual-scorecard');
       } else {
         router.push('/login');
       }

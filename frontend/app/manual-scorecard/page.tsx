@@ -135,9 +135,9 @@ function ManualScorecardContent() {
     setScorecard({ ...scorecard, customers: updatedCustomers });
   };
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = (customCustomer?: CustomerItem) => {
     if (!scorecard) return;
-    const newCustomer: CustomerItem = {
+    const newCustomer: CustomerItem = customCustomer || {
       customer_name: '',
       paid_amount: 0,
       unpaid_amount: 0,

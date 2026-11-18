@@ -6,11 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   FileSpreadsheet, 
-  LayoutDashboard, 
-  Users, 
-  LogOut, 
-  ShieldCheck, 
-  UserCircle 
+  LogOut 
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -26,18 +22,12 @@ export default function Navbar() {
     EMPLOYEE: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   };
 
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/manual-scorecard', label: 'Manual Scorecard', icon: FileSpreadsheet },
-    ...(profile.role === 'ADMIN' ? [{ href: '/admin/users', label: 'User Management', icon: Users }] : []),
-  ];
-
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <Link href="/dashboard" className="flex items-center space-x-3">
+          <div className="flex items-center space-x-6">
+            <Link href="/manual-scorecard" className="flex items-center space-x-3">
               <img
                 src="/image/Sunset-Group-Logo.png"
                 alt="Sunset Group Logo"
@@ -50,25 +40,14 @@ export default function Navbar() {
               </div>
             </Link>
 
-            <div className="hidden md:flex space-x-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname?.startsWith(link.href));
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
+            <div className="hidden sm:flex space-x-1">
+              <Link
+                href="/manual-scorecard"
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Monthly Scorecard</span>
+              </Link>
             </div>
           </div>
 

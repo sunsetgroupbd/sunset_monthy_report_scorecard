@@ -11,7 +11,6 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   loginWithPassword: (email: string, password: string) => Promise<void>;
-  loginAsRole: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -21,7 +20,6 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   loginWithPassword: async () => {},
-  loginAsRole: async () => {},
   logout: async () => {},
   refreshProfile: async () => {},
 });
@@ -98,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!profile && !user && !isPublic) {
       router.push('/login');
     } else if (profile && isPublic) {
-      router.push('/dashboard');
+      router.push('/manual-scorecard');
     }
   }, [profile, user, loading, pathname, router]);
 
@@ -117,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           setUser({ id: dev.profile_id, email: dev.email });
           await loadUserProfile();
-          router.push('/dashboard');
+          router.push('/manual-scorecard');
           return;
         } catch (devErr) {
           throw new Error(error.message);
@@ -125,38 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(data.user);
       await loadUserProfile();
-      router.push('/dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginAsRole = async (email: string) => {
-    setLoading(true);
-    try {
-      // 1. Try Supabase Auth with standard seeded test password
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'Password123!',
-      });
-      if (!error && data.user) {
-        setUser(data.user);
-        await loadUserProfile();
-        router.push('/dashboard');
-        return;
-      }
-
-      // 2. Fallback to dev token
-      const dev = await getDevToken(email);
-      localStorage.setItem('scorecard_auth_token', dev.access_token);
-      if (typeof document !== 'undefined') {
-        document.cookie = `scorecard_auth_token=${dev.access_token}; path=/; max-age=604800; SameSite=Lax`;
-      }
-      setUser({ id: dev.profile_id, email: dev.email });
-      await loadUserProfile();
-      router.push('/dashboard');
-    } catch (err: any) {
-      alert(`Login failed: ${err.message}`);
+      router.push('/manual-scorecard');
     } finally {
       setLoading(false);
     }
@@ -184,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         loading,
         loginWithPassword,
-        loginAsRole,
         logout,
         refreshProfile: async () => {
           await loadUserProfile();
