@@ -111,7 +111,7 @@ function ScorecardPrintContent() {
         </div>
 
         {/* Employee Info Grid */}
-        <div className="grid grid-cols-6 gap-2 mt-3 pt-2 border-t border-slate-200 text-[11px]">
+        <div className="grid grid-cols-4 gap-2 mt-3 pt-2 border-t border-slate-200 text-[11px]">
           <div>
             <span className="text-slate-400 block text-[9px] uppercase font-bold">Employee</span>
             <span className="font-bold text-slate-900">{employee?.full_name}</span>
@@ -123,14 +123,6 @@ function ScorecardPrintContent() {
           <div>
             <span className="text-slate-400 block text-[9px] uppercase font-bold">Designation</span>
             <span>{employee?.designation}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block text-[9px] uppercase font-bold">Team</span>
-            <span>{employee?.team?.name || 'Dhaka Team'}</span>
-          </div>
-          <div>
-            <span className="text-slate-400 block text-[9px] uppercase font-bold">Joining Date</span>
-            <span>{employee?.joining_date}</span>
           </div>
           <div>
             <span className="text-slate-400 block text-[9px] uppercase font-bold">Role</span>

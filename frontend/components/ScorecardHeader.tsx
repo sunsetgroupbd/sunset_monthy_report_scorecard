@@ -151,7 +151,7 @@ export default function ScorecardHeader({
       </div>
 
       {/* Employee Profile Information Strip */}
-      <div className="pt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
           <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Employee Name</span>
           <span className="text-sm font-semibold text-slate-800 truncate block mt-0.5">
@@ -168,18 +168,6 @@ export default function ScorecardHeader({
           <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Designation</span>
           <span className="text-sm font-medium text-slate-700 truncate block mt-0.5">
             {employee?.designation || '—'}
-          </span>
-        </div>
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Team</span>
-          <span className="text-sm font-medium text-slate-700 truncate block mt-0.5">
-            {employee?.team?.name || 'Unassigned'}
-          </span>
-        </div>
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Joining Date</span>
-          <span className="text-sm font-medium text-slate-700 block mt-0.5">
-            {employee?.joining_date || '—'}
           </span>
         </div>
         <div>
