@@ -1,10 +1,11 @@
+from datetime import date
 from typing import List, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import verify_supabase_token
-from app.models.models import Profile
+from app.models.models import Profile, Team
 
 security = HTTPBearer(auto_error=True)
 
@@ -16,13 +17,50 @@ async def get_current_user(
     token = credentials.credentials
     token_data = await verify_supabase_token(token)
     user_id = token_data.get("id")
+    email = token_data.get("email")
 
     profile = db.query(Profile).filter(Profile.id == user_id).first()
-    if not profile:
+    if not profile and email:
         # Check by email as a fallback if IDs haven't synced
-        email = token_data.get("email")
-        if email:
-            profile = db.query(Profile).filter(Profile.email == email).first()
+        profile = db.query(Profile).filter(Profile.email == email).first()
+
+    # If profile still does not exist, auto-provision profile for valid authenticated Supabase user
+    if not profile and email:
+        try:
+            count = db.query(Profile).count()
+            emp_id = str(10000001 + count)
+            while db.query(Profile).filter(Profile.employee_id == emp_id).first():
+                count += 1
+                emp_id = str(10000001 + count)
+
+            # Auto-assign ADMIN if email is sunset/admin or if no admin exists
+            has_admin = db.query(Profile).filter(Profile.role == "ADMIN").first()
+            is_admin_user = not has_admin or "admin" in email.lower() or "sunset" in email.lower()
+            role = "ADMIN" if is_admin_user else "EMPLOYEE"
+
+            first_team = db.query(Team).first()
+            team_id = first_team.id if first_team else None
+
+            raw_meta = token_data.get("payload", {}).get("user_metadata", {})
+            full_name = raw_meta.get("full_name") or email.split("@")[0].replace(".", " ").title()
+
+            profile = Profile(
+                id=user_id,
+                employee_id=emp_id,
+                full_name=full_name,
+                email=email,
+                designation="Administrator" if role == "ADMIN" else "Relationship Officer",
+                team_id=team_id,
+                joining_date=date.today(),
+                role=role,
+                is_active=True
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(profile)
+        except Exception:
+            db.rollback()
+            profile = db.query(Profile).filter((Profile.id == user_id) | (Profile.email == email)).first()
 
     if not profile:
         raise HTTPException(
