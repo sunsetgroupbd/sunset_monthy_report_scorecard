@@ -26,3 +26,9 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Environment files
+.env
+.env.local
+*.env
+*.env.local

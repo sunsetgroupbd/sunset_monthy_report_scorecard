@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadUserProfile();
         } else {
           // Check local dev token
-          const localToken = localStorage.getItem('scorecard_auth_token');
+          const localToken = typeof window !== 'undefined' ? localStorage.getItem('scorecard_auth_token') : null;
           if (localToken) {
             const p = await loadUserProfile();
             if (p && mounted) {
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
-    const isPublic = publicRoutes.some(route => pathname?.startsWith(route));
+    const isPublic = publicRoutes.some((route) => pathname?.startsWith(route));
 
     if (!profile && !user && !isPublic) {
       router.push('/login');
@@ -108,10 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 1. Try Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        // In local development if Supabase cloud isn't connected, fallback to dev token helper
+        // Fallback to dev token helper if local development
         try {
           const dev = await getDevToken(email);
           localStorage.setItem('scorecard_auth_token', dev.access_token);
+          if (typeof document !== 'undefined') {
+            document.cookie = `scorecard_auth_token=${dev.access_token}; path=/; max-age=604800; SameSite=Lax`;
+          }
           setUser({ id: dev.profile_id, email: dev.email });
           await loadUserProfile();
           router.push('/dashboard');
@@ -131,8 +134,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginAsRole = async (email: string) => {
     setLoading(true);
     try {
+      // 1. Try Supabase Auth with standard seeded test password
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'Password123!',
+      });
+      if (!error && data.user) {
+        setUser(data.user);
+        await loadUserProfile();
+        router.push('/dashboard');
+        return;
+      }
+
+      // 2. Fallback to dev token
       const dev = await getDevToken(email);
       localStorage.setItem('scorecard_auth_token', dev.access_token);
+      if (typeof document !== 'undefined') {
+        document.cookie = `scorecard_auth_token=${dev.access_token}; path=/; max-age=604800; SameSite=Lax`;
+      }
       setUser({ id: dev.profile_id, email: dev.email });
       await loadUserProfile();
       router.push('/dashboard');
@@ -150,6 +169,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     localStorage.removeItem('scorecard_auth_token');
+    if (typeof document !== 'undefined') {
+      document.cookie = 'scorecard_auth_token=; path=/; max-age=0; SameSite=Lax';
+    }
     setUser(null);
     setProfile(null);
     router.push('/login');
