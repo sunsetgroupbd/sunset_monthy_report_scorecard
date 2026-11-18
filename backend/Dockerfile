@@ -25,8 +25,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy backend application source
 COPY . .
 
-# Ensure local db file exists if fallback is used
-RUN touch /app/scorecard_local.db
+# Ensure scorecard_local.db is not a directory from a prior failed volume mount
+RUN if [ -d "/app/scorecard_local.db" ]; then rm -rf /app/scorecard_local.db; fi && \
+    touch /app/scorecard_local.db
 
 # Expose port 8002
 EXPOSE 8002
