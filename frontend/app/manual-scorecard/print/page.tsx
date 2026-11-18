@@ -85,20 +85,28 @@ function ScorecardPrintContent() {
 
       {/* Formal Executive Print Header */}
       <div className="border-b-2 border-slate-900 pb-3 mb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-xl font-extrabold uppercase tracking-tight text-slate-900">
-              Manual Monthly Performance Scorecard
-            </h1>
-            <p className="text-[11px] text-slate-600 mt-0.5">
-              Official Performance Appraisal & Customer Collection Document • Month: <span className="font-bold text-slate-900">{scorecard.month}</span>
-            </p>
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center space-x-3">
+            <img
+              src="/image/Sunset-Group-Logo.png"
+              alt="Sunset Group Logo"
+              className="h-12 w-auto object-contain"
+            />
+            <div className="h-8 w-px bg-slate-300"></div>
+            <div>
+              <h1 className="text-lg font-extrabold uppercase tracking-tight text-slate-900 leading-tight">
+                Sunset Group
+              </h1>
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">
+                Manual Monthly Performance Scorecard
+              </span>
+            </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-slate-900 bg-slate-50">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded border border-slate-900 bg-slate-50">
               Status: {scorecard.status}
             </span>
-            <div className="text-[9px] text-slate-400 mt-1">Generated: {new Date().toLocaleDateString('en-GB')} (Dhaka)</div>
+            <div className="text-[9px] text-slate-500 mt-1">Generated: {new Date().toLocaleDateString('en-GB')} (Dhaka)</div>
           </div>
         </div>
 

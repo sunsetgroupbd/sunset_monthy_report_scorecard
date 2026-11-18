@@ -48,7 +48,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-semibold mb-4">
             <Shield className="w-3.5 h-3.5" />
@@ -58,7 +58,7 @@ export default function DashboardPage() {
             Welcome, {profile?.full_name}!
           </h1>
           <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-            {profile?.designation} • {profile?.team?.name || 'Dhaka Alpha Sales Team'} (ID: {profile?.employee_id})
+            {profile?.designation} • {profile?.team?.name || 'Sunset Group Sales Team'} (ID: {profile?.employee_id})
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -81,6 +81,17 @@ export default function DashboardPage() {
               </Link>
             )}
           </div>
+        </div>
+
+        <div className="relative z-10 hidden md:flex flex-col items-center justify-center p-4 bg-white/10 backdrop-blur-xs rounded-2xl border border-white/10 shrink-0">
+          <img
+            src="/image/Sunset-Group-Logo.png"
+            alt="Sunset Group Logo"
+            className="h-16 w-auto object-contain brightness-0 invert drop-shadow"
+          />
+          <span className="text-[11px] text-slate-300 font-semibold tracking-wider uppercase mt-2">
+            Performance Portal
+          </span>
         </div>
 
         {/* Decorative background grid */}

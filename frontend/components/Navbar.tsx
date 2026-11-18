@@ -38,12 +38,15 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center space-x-8">
             <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-                <FileSpreadsheet className="w-6 h-6" />
-              </div>
+              <img
+                src="/image/Sunset-Group-Logo.png"
+                alt="Sunset Group Logo"
+                className="h-10 w-auto object-contain max-w-[140px]"
+              />
+              <div className="h-7 w-px bg-slate-200 hidden sm:block"></div>
               <div className="flex flex-col">
-                <span className="font-bold text-slate-900 leading-tight">Monthly Scorecard</span>
-                <span className="text-xs text-slate-500 font-medium">Performance System</span>
+                <span className="font-bold text-slate-900 leading-tight text-sm">Monthly Scorecard</span>
+                <span className="text-[11px] text-slate-500 font-medium">Performance Portal</span>
               </div>
             </Link>
 

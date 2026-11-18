@@ -51,14 +51,18 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50">
         {/* Brand Header */}
         <div className="text-center">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-600/30">
-            <FileSpreadsheet className="w-8 h-8" />
+          <div className="flex justify-center mb-4">
+            <img
+              src="/image/Sunset-Group-Logo.png"
+              alt="Sunset Group Logo"
+              className="h-16 w-auto object-contain"
+            />
           </div>
-          <h2 className="mt-5 text-2xl font-extrabold text-slate-900 tracking-tight">
-            Manual Scorecard Portal
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Monthly Scorecard Portal
           </h2>
           <p className="mt-1 text-xs text-slate-500">
-            Sign in with your enterprise credentials to access performance sheets
+            Sunset Group Performance & Manual Scorecard System
           </p>
         </div>
 
