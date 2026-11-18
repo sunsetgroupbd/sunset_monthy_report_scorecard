@@ -90,33 +90,34 @@ function ScorecardPrintContent() {
   const m1 = getPriorMonthLabel(month, 1);
   const monthFullName = getFormattedMonthName(month);
 
-  // Dynamic row padding to fill the entire page based on orientation
-  // Portrait: 28 customer rows fills the 297mm vertical A4 sheet edge-to-edge (matches physical paper)
-  // Landscape: 14 customer rows fills the 210mm horizontal A4 sheet edge-to-edge
+  const isPortrait = orientation === 'portrait';
+
+  // Target customer rows tuned strictly to guarantee single-page (1/1) print with zero spillover
+  // Portrait: 20 rows leaves a safe margin so page 2 is never triggered
+  // Landscape: 12 rows perfectly fills the landscape canvas without overflow
   const customers = scorecard.customers || [];
-  const TARGET_CUSTOMER_ROWS = orientation === 'portrait' ? Math.max(28, customers.length) : Math.max(14, customers.length);
+  const TARGET_CUSTOMER_ROWS = isPortrait ? Math.max(20, customers.length) : Math.max(12, customers.length);
   const paddedCustomerRows: (CustomerItem | null)[] = [...customers];
   while (paddedCustomerRows.length < TARGET_CUSTOMER_ROWS) {
     paddedCustomerRows.push(null);
   }
 
-  const isPortrait = orientation === 'portrait';
-
   return (
     <div className="w-full bg-slate-100 print:bg-white text-black min-h-screen p-2 sm:p-4 print:p-0">
-      {/* Dynamic Print CSS for Full-Page Edge-to-Edge Alignment */}
+      {/* Dynamic Print CSS for Strict 1-Page Output */}
       <style dangerouslySetInnerHTML={{
         __html: `
           @media print {
             @page {
               size: ${isPortrait ? 'portrait A4' : 'landscape A4'};
-              margin: ${isPortrait ? '4mm 4mm' : '4mm 4mm'};
+              margin: 6mm 6mm;
             }
             html, body {
               background: #fff !important;
               color: #000 !important;
               margin: 0 !important;
               padding: 0 !important;
+              height: 100% !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
@@ -124,9 +125,11 @@ function ScorecardPrintContent() {
               width: 100% !important;
               max-width: 100% !important;
               box-shadow: none !important;
-              margin: 0 !important;
+              margin: 0 auto !important;
               page-break-inside: avoid !important;
+              break-inside: avoid !important;
               page-break-after: avoid !important;
+              break-after: avoid !important;
             }
           }
         `
@@ -154,7 +157,7 @@ function ScorecardPrintContent() {
               }`}
             >
               <LayoutTemplate className="w-3.5 h-3.5" />
-              <span>Portrait A4 (Official Paper Sheet)</span>
+              <span>Portrait A4</span>
             </button>
             <button
               onClick={() => setOrientation('landscape')}
@@ -165,7 +168,7 @@ function ScorecardPrintContent() {
               }`}
             >
               <Maximize2 className="w-3.5 h-3.5" />
-              <span>Landscape A4 (Wide Sheet)</span>
+              <span>Landscape A4</span>
             </button>
           </div>
 
@@ -174,7 +177,7 @@ function ScorecardPrintContent() {
             className="flex items-center space-x-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-md transition cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Report ({isPortrait ? 'Portrait A4' : 'Landscape A4'})</span>
+            <span>Print Report (Single Page)</span>
           </button>
         </div>
       </div>
@@ -185,13 +188,13 @@ function ScorecardPrintContent() {
       <div 
         className={`scorecard-sheet mx-auto bg-white border-[1.5px] border-black text-black select-none shadow-lg print:shadow-none transition-all ${
           isPortrait 
-            ? 'w-full max-w-[202mm] text-[8px]' 
-            : 'w-full max-w-[287mm] text-[9.5px]'
+            ? 'w-full max-w-[200mm] text-[8px]' 
+            : 'w-full max-w-[287mm] text-[9px]'
         }`}
       >
         
         {/* ROW 1: TOP HEADER INFO */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-bold ${isPortrait ? 'h-[30px]' : 'h-[36px]'}`}>
+        <div className={`grid grid-cols-18 border-b border-black text-center font-bold ${isPortrait ? 'h-[28px]' : 'h-[34px]'}`}>
           <div className="col-span-1 p-0.5 bg-slate-50 border-r border-black flex items-center justify-center font-extrabold text-center leading-tight">
             Name
           </div>
@@ -225,60 +228,60 @@ function ScorecardPrintContent() {
         </div>
 
         {/* ROW 2: PORTFOLIO & LEAD SUMMARY METRICS */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-bold bg-white ${isPortrait ? 'h-[34px] text-[7px]' : 'h-[40px] text-[8.5px]'}`}>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-1">
+        <div className={`grid grid-cols-18 border-b border-black text-center font-bold bg-white ${isPortrait ? 'h-[32px] text-[7px]' : 'h-[38px] text-[8.5px]'}`}>
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">EMI Due Monthly</span>
             <span className="font-mono font-bold text-[1.1em]">{formatNumber(scorecard.emi_due_monthly)}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI Client</span>
             <span className="font-mono text-[1.1em]">{scorecard.emi_client_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI Hold</span>
             <span className="font-mono text-[1.1em]">{scorecard.emi_hold_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI cancel</span>
             <span className="font-mono text-[1.1em]">{scorecard.emi_cancel_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">TB Due</span>
             <span className="font-mono font-bold text-[1.1em]">{formatNumber(scorecard.tb_due_amount)}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Client</span>
             <span className="font-mono text-[1.1em]">{scorecard.tb_client_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Share</span>
             <span className="font-mono text-[1.1em]">{scorecard.tb_share_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Hold</span>
             <span className="font-mono text-[1.1em]">{scorecard.tb_hold_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB cancel</span>
             <span className="font-mono text-[1.1em]">{scorecard.tb_cancel_count || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Total Fair Lead</span>
             <span className="font-mono text-[1.1em]">{achieved.fair_leads || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Total FB Lead</span>
             <span className="font-mono text-[1.1em]">{achieved.fb_leads || ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Sheet Score</span>
             <span className="font-mono font-bold text-[1.1em]">{scorecard.sheet_score ?? ''}</span>
           </div>
-          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-1">
+          <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Call Score</span>
             <span className="font-mono font-bold text-[1.1em]">{scorecard.call_score ?? ''}</span>
           </div>
-          <div className="col-span-2 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-1">
+          <div className="col-span-2 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">Prediction Amt from Emp</span>
             <span className="font-mono font-extrabold text-[1.1em]">{formatNumber(scorecard.prediction_amount)}</span>
           </div>
@@ -291,7 +294,7 @@ function ScorecardPrintContent() {
         {/* TABLE 1: WEEKLY ACTIVITY                                    */}
         {/* ----------------------------------------------------------- */}
         {/* Table 1 Header Row (18 columns) */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[26px] text-[7px]' : 'h-[30px] text-[8.5px]'}`}>
+        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[24px] text-[7px]' : 'h-[28px] text-[8px]'}`}>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Month</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">TG</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
@@ -314,7 +317,7 @@ function ScorecardPrintContent() {
 
         {/* Historical Rows: M-3, M-2, M-1 */}
         {[m3, m2, m1].map((histLabel, idx) => (
-          <div key={idx} className={`grid grid-cols-18 border-b border-black text-center bg-white ${isPortrait ? 'h-[23px] text-[7.5px]' : 'h-[26px] text-[9px]'}`}>
+          <div key={idx} className={`grid grid-cols-18 border-b border-black text-center bg-white ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
               {histLabel}
             </div>
@@ -328,7 +331,7 @@ function ScorecardPrintContent() {
 
         {/* Target Benchmark Row (TG) */}
         {targetPeriod && (
-          <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[23px] text-[7.5px]' : 'h-[26px] text-[9px]'}`}>
+          <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-extrabold bg-amber-100/60">
               TG (Target)
             </div>
@@ -391,7 +394,7 @@ function ScorecardPrintContent() {
           const p = scorecard.periods.find(item => item.period_index === pRow.idx) || {} as PeriodItem;
           const tc = calculatePeriodTotalCollection(p);
           return (
-            <div key={pRow.idx} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[23px] text-[7.5px]' : 'h-[26px] text-[9px]'}`}>
+            <div key={pRow.idx} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
                 {pRow.label}
               </div>
@@ -454,7 +457,7 @@ function ScorecardPrintContent() {
         {/* TABLE 2: PREDICTION PAYMENT (CUSTOMER COLLECTION PLAN)      */}
         {/* ----------------------------------------------------------- */}
         {/* Header Row for Prediction Payment */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[26px] text-[7px]' : 'h-[30px] text-[8.5px]'}`}>
+        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[24px] text-[7px]' : 'h-[28px] text-[8px]'}`}>
           <div className="col-span-2 p-0.5 border-r border-black flex items-center justify-center leading-none">Cx Name</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Paid</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Unpaid</div>
@@ -473,7 +476,7 @@ function ScorecardPrintContent() {
           <div className="col-span-2 p-0.5 flex items-center justify-center leading-none">Remarks</div>
         </div>
 
-        {/* Customer Data / Blank Rows to Fill Full Page */}
+        {/* Customer Data / Blank Rows - Compacted to safely fit exactly 1 page */}
         {paddedCustomerRows.map((c, rIdx) => {
           const tc = c ? calculateCustomerTotalCollection(c) : 0;
           return (
@@ -481,8 +484,8 @@ function ScorecardPrintContent() {
               key={rIdx} 
               className={`grid grid-cols-18 border-b border-black last:border-b-0 ${
                 isPortrait 
-                  ? 'h-[23px] text-[7.5px]' 
-                  : 'h-[26px] text-[9px]'
+                  ? 'h-[21px] text-[7.5px]' 
+                  : 'h-[24px] text-[8.5px]'
               }`}
             >
               <div className="col-span-2 p-0.5 border-r border-black px-1 flex items-center font-semibold truncate">
