@@ -34,8 +34,8 @@ def parse_month_query(month_str: str) -> date:
 
 @router.get("", response_model=ScorecardResponse)
 def get_scorecard(
-    employee_id: str = Query(..., description="UUID or 8-digit Employee ID"),
-    month: str = Query(..., description="Month in YYYY-MM format"),
+    employee_id: Optional[str] = Query(None, description="UUID or 8-digit Employee ID (defaults to current user)"),
+    month: Optional[str] = Query(None, description="Month in YYYY-MM format (defaults to current month)"),
     current_user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -43,23 +43,26 @@ def get_scorecard(
     Get full scorecard for an employee and month.
     If it does not exist, returns an initialized empty DRAFT scorecard structure.
     """
-    if not check_employee_access(current_user, employee_id, db):
+    target_emp_query = employee_id or current_user.employee_id or current_user.id
+    target_month_str = month or datetime.now().strftime("%Y-%m")
+
+    if not check_employee_access(current_user, target_emp_query, db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to view this employee's scorecard."
         )
 
-    target_month = parse_month_query(month)
+    target_month = parse_month_query(target_month_str)
 
     # Find target employee profile
     target_profile = db.query(Profile).filter(
-        or_(Profile.id == employee_id, Profile.employee_id == employee_id)
+        or_(Profile.id == target_emp_query, Profile.employee_id == target_emp_query)
     ).first()
 
     if not target_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Employee '{employee_id}' not found."
+            detail=f"Employee '{target_emp_query}' not found."
         )
 
     scorecard = ScorecardRepository.get_by_employee_and_month(db, target_profile.id, target_month)

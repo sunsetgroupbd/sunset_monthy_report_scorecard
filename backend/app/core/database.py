@@ -10,7 +10,10 @@ if db_url and db_url.startswith("postgres://"):
 
 if not db_url or "YOUR_DB_PASSWORD" in db_url:
     # Local fallback for development and tests if Supabase DB URL is not provided or still has placeholder
-    db_url = "sqlite:///./scorecard_local.db"
+    # Always resolve absolute path to backend/scorecard_local.db so working directory never causes a disconnect
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    local_db_path = os.path.join(base_dir, "scorecard_local.db")
+    db_url = f"sqlite:///{local_db_path.replace(os.sep, '/')}"
 
 connect_args = {}
 if "sqlite" in db_url:
