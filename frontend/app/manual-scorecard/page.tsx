@@ -1,0 +1,355 @@
+'use client';
+
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  fetchScorecard, 
+  upsertScorecard, 
+  updateScorecardStatus, 
+  fetchSubordinates, 
+  fetchMonths 
+} from '@/lib/api/scorecard';
+import { 
+  ScorecardResponse, 
+  Subordinate, 
+  PeriodItem, 
+  CustomerItem, 
+  PeriodMetrics 
+} from '@/types/scorecard';
+import ScorecardHeader from '@/components/ScorecardHeader';
+import AttendanceForecastCard from '@/components/AttendanceForecastCard';
+import SupervisorEvaluationCard from '@/components/SupervisorEvaluationCard';
+import PortfolioSnapshotCard from '@/components/PortfolioSnapshotCard';
+import TablePerformanceByPeriod from '@/components/TablePerformanceByPeriod';
+import TableCustomerCollectionPlan from '@/components/TableCustomerCollectionPlan';
+import AuditTrailModal from '@/components/AuditTrailModal';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+
+function ManualScorecardContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { profile } = useAuth();
+
+  const [scorecard, setScorecard] = useState<ScorecardResponse | null>(null);
+  const [subordinates, setSubordinates] = useState<Subordinate[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function initSelectors() {
+      try {
+        const [subs, mList] = await Promise.all([
+          fetchSubordinates().catch(() => []),
+          fetchMonths().catch(() => [])
+        ]);
+
+        setSubordinates(subs);
+        setAvailableMonths(mList.length > 0 ? mList : ['2026-11', '2026-10']);
+
+        const paramEmp = searchParams.get('employee_id');
+        const paramMonth = searchParams.get('month');
+
+        const initialEmp = paramEmp || (subs.length > 0 ? subs[0].id : profile?.id || '');
+        const initialMonth = paramMonth || (mList.length > 0 ? mList[0] : '2026-11');
+
+        setSelectedEmployeeId(initialEmp);
+        setSelectedMonth(initialMonth);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (profile) {
+      initSelectors();
+    }
+  }, [profile, searchParams]);
+
+  const loadScorecard = useCallback(async (empId: string, month: string) => {
+    if (!empId || !month) return;
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const data = await fetchScorecard(empId, month);
+      setScorecard(data);
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to load scorecard.' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedEmployeeId && selectedMonth) {
+      loadScorecard(selectedEmployeeId, selectedMonth);
+    }
+  }, [selectedEmployeeId, selectedMonth, loadScorecard]);
+
+  const handleEmployeeChange = (newEmpId: string) => {
+    setSelectedEmployeeId(newEmpId);
+    router.push(`/manual-scorecard?employee_id=${newEmpId}&month=${selectedMonth}`);
+  };
+
+  const handleMonthChange = (newMonth: string) => {
+    setSelectedMonth(newMonth);
+    router.push(`/manual-scorecard?employee_id=${selectedEmployeeId}&month=${newMonth}`);
+  };
+
+  const handleAttendanceForecastChange = (field: string, val: number) => {
+    if (!scorecard) return;
+    setScorecard({ ...scorecard, [field]: val });
+  };
+
+  const handleSupervisorEvaluationChange = (field: string, val: any) => {
+    if (!scorecard) return;
+    setScorecard({ ...scorecard, [field]: val });
+  };
+
+  const handlePortfolioChange = (field: string, val: number) => {
+    if (!scorecard) return;
+    setScorecard({ ...scorecard, [field]: val });
+  };
+
+  const handlePeriodChange = (periodIndex: number, field: keyof PeriodMetrics, value: any) => {
+    if (!scorecard) return;
+    const updatedPeriods = scorecard.periods.map(p => {
+      if (p.period_index === periodIndex) {
+        return { ...p, [field]: value };
+      }
+      return p;
+    });
+    setScorecard({ ...scorecard, periods: updatedPeriods });
+  };
+
+  const handleCustomerChange = (index: number, field: keyof CustomerItem, value: any) => {
+    if (!scorecard) return;
+    const updatedCustomers = [...scorecard.customers];
+    updatedCustomers[index] = { ...updatedCustomers[index], [field]: value };
+    setScorecard({ ...scorecard, customers: updatedCustomers });
+  };
+
+  const handleAddCustomer = () => {
+    if (!scorecard) return;
+    const newCustomer: CustomerItem = {
+      customer_name: '',
+      paid_amount: 0,
+      unpaid_amount: 0,
+      in_out_plan: 'In Plan',
+      new_sales_amount: 0,
+      tb_amount: 0,
+      emi_amount: 0,
+      total_collection: 0,
+      lead_status: 'HP',
+      collection_probability: 50,
+      remarks: ''
+    };
+    setScorecard({ ...scorecard, customers: [...scorecard.customers, newCustomer] });
+  };
+
+  const handleDeleteCustomer = (index: number) => {
+    if (!scorecard) return;
+    const updated = scorecard.customers.filter((_, i) => i !== index);
+    setScorecard({ ...scorecard, customers: updated });
+  };
+
+  const handleSaveDraft = async () => {
+    if (!scorecard) return;
+    setSaving(true);
+    setFeedback(null);
+
+    try {
+      const payload = {
+        employee_id: selectedEmployeeId,
+        month: selectedMonth.length === 7 ? `${selectedMonth}-01` : selectedMonth,
+        planned_leave: scorecard.planned_leave,
+        unauthorized_leave: scorecard.unauthorized_leave,
+        working_days: scorecard.working_days,
+        prediction_amount: scorecard.prediction_amount,
+        sheet_score: scorecard.sheet_score,
+        call_score: scorecard.call_score,
+        marking: scorecard.marking,
+        supervisor_notes: scorecard.supervisor_notes,
+        emi_due_monthly: scorecard.emi_due_monthly,
+        emi_client_count: scorecard.emi_client_count,
+        emi_hold_count: scorecard.emi_hold_count,
+        emi_cancel_count: scorecard.emi_cancel_count,
+        tb_due_amount: scorecard.tb_due_amount,
+        tb_client_count: scorecard.tb_client_count,
+        tb_share_count: scorecard.tb_share_count,
+        tb_hold_count: scorecard.tb_hold_count,
+        tb_cancel_count: scorecard.tb_cancel_count,
+        periods: scorecard.periods,
+        customers: scorecard.customers
+      };
+
+      const res = await upsertScorecard(payload);
+      setScorecard(res);
+      setFeedback({ type: 'success', message: 'Scorecard saved successfully!' });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to save scorecard.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string, confirmationMsg: string) => {
+    if (!scorecard?.id) {
+      await handleSaveDraft();
+    }
+    if (!confirm(confirmationMsg)) return;
+
+    setSaving(true);
+    setFeedback(null);
+    try {
+      if (!scorecard?.id) throw new Error('Scorecard record missing ID. Save draft first.');
+      const res = await updateScorecardStatus(scorecard.id, newStatus);
+      setScorecard(res);
+      setFeedback({ type: 'success', message: `Scorecard transitioned to ${newStatus}.` });
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Status transition failed.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading && !scorecard) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
+        <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-slate-500 font-medium">Loading Scorecard Data...</p>
+      </div>
+    );
+  }
+
+  if (!scorecard) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+        <h3 className="text-base font-bold text-slate-900">Unable to load scorecard</h3>
+        <p className="text-xs text-slate-500 mt-1">Please verify employee access and month parameters.</p>
+      </div>
+    );
+  }
+
+  const isClosed = scorecard.status === 'CLOSED';
+  const isEditingDisabled = !scorecard.can_edit || isClosed;
+
+  return (
+    <div className="space-y-6 pb-12">
+      {feedback && (
+        <div className={`p-4 rounded-xl border flex items-center justify-between text-xs font-semibold ${
+          feedback.type === 'success' 
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
+            : 'bg-rose-50 border-rose-200 text-rose-900'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
+          <button onClick={() => setFeedback(null)} className="text-xs opacity-70 hover:opacity-100">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <ScorecardHeader
+        scorecard={scorecard}
+        subordinates={subordinates}
+        availableMonths={availableMonths}
+        selectedEmployeeId={selectedEmployeeId}
+        selectedMonth={selectedMonth}
+        onEmployeeChange={handleEmployeeChange}
+        onMonthChange={handleMonthChange}
+        onSaveDraft={handleSaveDraft}
+        onSubmit={() => handleStatusChange('SUBMITTED', 'Are you sure you want to SUBMIT this scorecard for supervisor review?')}
+        onApprove={() => handleStatusChange('APPROVED', 'Approve this monthly scorecard?')}
+        onClose={() => handleStatusChange('CLOSED', 'Close and lock this monthly scorecard? Normal editing will be restricted.')}
+        onReopen={() => handleStatusChange('DRAFT', 'Reopen this closed scorecard back to DRAFT?')}
+        onOpenAuditLogs={() => setShowAuditModal(true)}
+        isSaving={saving}
+        canEdit={scorecard.can_edit}
+        canSubmit={scorecard.can_submit}
+        canApprove={scorecard.can_approve}
+        canClose={scorecard.can_close}
+        canReopen={scorecard.can_reopen}
+      />
+
+      <AttendanceForecastCard
+        plannedLeave={scorecard.planned_leave}
+        unauthorizedLeave={scorecard.unauthorized_leave}
+        workingDays={scorecard.working_days}
+        predictionAmount={scorecard.prediction_amount}
+        onChange={handleAttendanceForecastChange}
+        disabled={isEditingDisabled}
+      />
+
+      <TablePerformanceByPeriod
+        periods={scorecard.periods}
+        onChangePeriod={handlePeriodChange}
+        disabled={isEditingDisabled}
+      />
+
+      <TableCustomerCollectionPlan
+        customers={scorecard.customers}
+        onChangeCustomer={handleCustomerChange}
+        onAddCustomer={handleAddCustomer}
+        onDeleteCustomer={handleDeleteCustomer}
+        disabled={isEditingDisabled}
+      />
+
+      <PortfolioSnapshotCard
+        emiDueMonthly={scorecard.emi_due_monthly}
+        emiClientCount={scorecard.emi_client_count}
+        emiHoldCount={scorecard.emi_hold_count}
+        emiCancelCount={scorecard.emi_cancel_count}
+        tbDueAmount={scorecard.tb_due_amount}
+        tbClientCount={scorecard.tb_client_count}
+        tbShareCount={scorecard.tb_share_count}
+        tbHoldCount={scorecard.tb_hold_count}
+        tbCancelCount={scorecard.tb_cancel_count}
+        onChange={handlePortfolioChange}
+        disabled={isEditingDisabled}
+      />
+
+      <SupervisorEvaluationCard
+        sheetScore={scorecard.sheet_score}
+        callScore={scorecard.call_score}
+        marking={scorecard.marking}
+        supervisorNotes={scorecard.supervisor_notes}
+        onChange={handleSupervisorEvaluationChange}
+        canEditSupervisorFields={scorecard.can_edit_supervisor_fields}
+        disabled={isClosed}
+      />
+
+      <AuditTrailModal
+        isOpen={showAuditModal}
+        onClose={() => setShowAuditModal(false)}
+        auditLogs={scorecard.audit_logs || []}
+      />
+    </div>
+  );
+}
+
+export default function ManualScorecardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
+        <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-slate-500 font-medium">Loading Scorecard...</p>
+      </div>
+    }>
+      <ManualScorecardContent />
+    </Suspense>
+  );
+}

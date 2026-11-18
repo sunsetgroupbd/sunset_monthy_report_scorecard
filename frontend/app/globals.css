@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 10px !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  .print\:border-none {
+    border: none !important;
+  }
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  input, select, textarea {
+    border: none !important;
+    background: transparent !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    padding: 0 !important;
+  }
+}

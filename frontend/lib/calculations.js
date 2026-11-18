@@ -1,0 +1,98 @@
+export function formatBDT(amount) {
+    if (amount === undefined || amount === null || isNaN(Number(amount)))
+        return '৳ 0.00';
+    const num = Number(amount);
+    return '৳ ' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+export function formatNumber(val) {
+    if (val === undefined || val === null || isNaN(Number(val)))
+        return '0';
+    const num = Number(val);
+    return num.toLocaleString('en-IN');
+}
+export function calculatePeriodTotalCollection(period) {
+    if (period.total_collection_override !== null && period.total_collection_override !== undefined) {
+        return Number(period.total_collection_override);
+    }
+    const ns = Number(period.new_sales || 0);
+    const tb = Number(period.tb_amount || 0);
+    const emi = Number(period.emi_amount || 0);
+    return ns + tb + emi;
+}
+export function calculateCustomerTotalCollection(customer) {
+    const ns = Number(customer.new_sales_amount || 0);
+    const tb = Number(customer.tb_amount || 0);
+    const emi = Number(customer.emi_amount || 0);
+    return ns + tb + emi;
+}
+export function calculateCustomerSummary(customers) {
+    let total_paid = 0;
+    let total_unpaid = 0;
+    let total_expected = 0;
+    for (const c of customers) {
+        const paid = Number(c.paid_amount || 0);
+        const unpaid = Number(c.unpaid_amount || 0);
+        const prob = Number(c.collection_probability || 0) / 100.0;
+        const tc = calculateCustomerTotalCollection(c);
+        total_paid += paid;
+        total_unpaid += unpaid;
+        total_expected += (tc * prob);
+    }
+    return {
+        total_paid: Math.round(total_paid * 100) / 100,
+        total_unpaid: Math.round(total_unpaid * 100) / 100,
+        total_expected_collection: Math.round(total_expected * 100) / 100,
+    };
+}
+export function calculateTotalAchieved(periods) {
+    const weekly = periods.filter(p => p.period_index >= 1 && p.period_index <= 5);
+    const new_sales = weekly.reduce((sum, p) => sum + Number(p.new_sales || 0), 0);
+    const tb_amount = weekly.reduce((sum, p) => sum + Number(p.tb_amount || 0), 0);
+    const emi_amount = weekly.reduce((sum, p) => sum + Number(p.emi_amount || 0), 0);
+    // If any period has override, total collection reflects sum of individual period total collections
+    const total_collection = weekly.reduce((sum, p) => sum + calculatePeriodTotalCollection(p), 0);
+    return {
+        new_sales,
+        tb_amount,
+        emi_amount,
+        total_collection,
+        total_leads: weekly.reduce((sum, p) => sum + Number(p.total_leads || 0), 0),
+        fair_leads: weekly.reduce((sum, p) => sum + Number(p.fair_leads || 0), 0),
+        fb_leads: weekly.reduce((sum, p) => sum + Number(p.fb_leads || 0), 0),
+        hp: weekly.reduce((sum, p) => sum + Number(p.hp || 0), 0),
+        p: weekly.reduce((sum, p) => sum + Number(p.p || 0), 0),
+        fup: weekly.reduce((sum, p) => sum + Number(p.fup || 0), 0),
+        dialed_calls: weekly.reduce((sum, p) => sum + Number(p.dialed_calls || 0), 0),
+        connected_calls: weekly.reduce((sum, p) => sum + Number(p.connected_calls || 0), 0),
+        outdoor_visits: weekly.reduce((sum, p) => sum + Number(p.outdoor_visits || 0), 0),
+        indoor_cx: weekly.reduce((sum, p) => sum + Number(p.indoor_cx || 0), 0),
+        meeting_hours: Math.round(weekly.reduce((sum, p) => sum + Number(p.meeting_hours || 0), 0) * 10) / 10,
+    };
+}
+export function calculateAchievementPct(achieved, target) {
+    const safePct = (ach, tgt) => {
+        if (!tgt || tgt <= 0)
+            return 0;
+        return Math.round((ach / tgt) * 10000) / 100;
+    };
+    const targetTotalCollection = target
+        ? (target.total_collection_override ?? (Number(target.new_sales || 0) + Number(target.tb_amount || 0) + Number(target.emi_amount || 0)))
+        : 0;
+    return {
+        new_sales: safePct(achieved.new_sales, Number(target?.new_sales || 0)),
+        tb_amount: safePct(achieved.tb_amount, Number(target?.tb_amount || 0)),
+        emi_amount: safePct(achieved.emi_amount, Number(target?.emi_amount || 0)),
+        total_collection: safePct(achieved.total_collection, targetTotalCollection),
+        total_leads: Math.round(safePct(achieved.total_leads, Number(target?.total_leads || 0))),
+        fair_leads: Math.round(safePct(achieved.fair_leads, Number(target?.fair_leads || 0))),
+        fb_leads: Math.round(safePct(achieved.fb_leads, Number(target?.fb_leads || 0))),
+        hp: Math.round(safePct(achieved.hp, Number(target?.hp || 0))),
+        p: Math.round(safePct(achieved.p, Number(target?.p || 0))),
+        fup: Math.round(safePct(achieved.fup, Number(target?.fup || 0))),
+        dialed_calls: Math.round(safePct(achieved.dialed_calls, Number(target?.dialed_calls || 0))),
+        connected_calls: Math.round(safePct(achieved.connected_calls, Number(target?.connected_calls || 0))),
+        outdoor_visits: Math.round(safePct(achieved.outdoor_visits, Number(target?.outdoor_visits || 0))),
+        indoor_cx: Math.round(safePct(achieved.indoor_cx, Number(target?.indoor_cx || 0))),
+        meeting_hours: safePct(achieved.meeting_hours, Number(target?.meeting_hours || 0)),
+    };
+}
