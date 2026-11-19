@@ -186,10 +186,10 @@ export default function TablePerformanceByPeriod({
                 <th className="py-2 px-3 sticky left-0 z-30 bg-slate-100 border-r border-slate-200">
                   Checkpoint
                 </th>
-                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
+                <th colSpan={4} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
                   Financial Performance & Collections (BDT)
                 </th>
-                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
+                <th colSpan={6} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
                   Lead Pipeline
                 </th>
                 <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-purple-50/70 text-purple-900">
@@ -203,17 +203,17 @@ export default function TablePerformanceByPeriod({
               {/* Sub-column Headers */}
               <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-[11px] whitespace-nowrap">
                 <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Period</th>
-                {/* Financial with dedicated Target */}
-                <th className="py-2 px-2.5 min-w-[110px] bg-amber-50/50 text-amber-950 font-bold">Target</th>
+                {/* Financial without Target on left */}
                 <th className="py-2 px-2.5 min-w-[100px]">New Sales</th>
                 <th className="py-2 px-2.5 min-w-[105px]">Token / Booking</th>
                 <th className="py-2 px-2.5 min-w-[95px]">EMI</th>
                 <th className="py-2 px-2.5 min-w-[125px] border-r border-slate-200 bg-emerald-50/40 text-emerald-950 font-bold">
                   Total Collection
                 </th>
-                {/* Leads (Total Lead removed, Fair and FB retained) */}
-                <th className="py-2 px-2 text-center min-w-[60px]">Fair Leads</th>
-                <th className="py-2 px-2 text-center min-w-[60px]">FB Leads</th>
+                {/* Leads (Total Lead added between EMI/Total Collection and Current Fair Lead) */}
+                <th className="py-2 px-2 text-center min-w-[65px] font-bold text-indigo-900 bg-indigo-50/50">Total Lead</th>
+                <th className="py-2 px-2 text-center min-w-[60px]">Current Fair Lead</th>
+                <th className="py-2 px-2 text-center min-w-[60px]">Current FB Leads</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-emerald-700">HP</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-blue-700">P</th>
                 <th className="py-2 px-2 text-center min-w-[50px] border-r border-slate-200 font-bold text-amber-700">Fup</th>
@@ -240,19 +240,6 @@ export default function TablePerformanceByPeriod({
                       <span>TG (Target)</span>
                     </div>
                     <div className="text-[10px] text-amber-700 font-normal">Monthly Benchmark</div>
-                  </td>
-                  {/* Target Column */}
-                  <td className="py-1 px-1.5 bg-amber-100/50">
-                    <input
-                      type="number"
-                      step="500"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.target || ''}
-                      onChange={(e) => onChangePeriod(0, 'target', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-bold text-right text-amber-900 focus:ring-1 focus:ring-amber-500"
-                    />
                   </td>
                   {/* Financial inputs for Target */}
                   <td className="py-1 px-1.5">
@@ -293,6 +280,11 @@ export default function TablePerformanceByPeriod({
                   </td>
                   <td className="py-1.5 px-2.5 text-right font-bold text-emerald-900 bg-amber-100/40 border-r border-amber-200">
                     {formatBDT(calculatePeriodTotalCollection(targetPeriod))}
+                  </td>
+
+                  {/* Total Lead between EMI/Total Collection and Current Fair Lead */}
+                  <td className="py-1.5 px-2 text-center font-bold text-indigo-950 bg-amber-100/30 font-mono">
+                    {((targetPeriod.fair_leads || 0) + (targetPeriod.fb_leads || 0)) || '0'}
                   </td>
 
                   {/* Leads Inputs */}
@@ -452,20 +444,6 @@ export default function TablePerformanceByPeriod({
                       </div>
                     </td>
 
-                    {/* Target (Editable per period or checkpoint) */}
-                    <td className="py-1 px-1.5 bg-amber-50/20">
-                      <input
-                        type="number"
-                        step="500"
-                        min="0"
-                        disabled={disabled}
-                        value={period.target || ''}
-                        onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-amber-500 disabled:bg-slate-50 text-slate-700"
-                      />
-                    </td>
-
                     {/* Financial Fields */}
                     <td className="py-1 px-1.5">
                       <input
@@ -527,6 +505,11 @@ export default function TablePerformanceByPeriod({
                           Overridden
                         </span>
                       )}
+                    </td>
+
+                    {/* Total Lead added between EMI/Total Collection and Current Fair Lead */}
+                    <td className="py-2 px-1 text-center font-bold text-slate-800 bg-slate-50 font-mono">
+                      {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
                     </td>
 
                     {/* Leads Fields */}
@@ -676,9 +659,6 @@ export default function TablePerformanceByPeriod({
                   <div>Total Achieved</div>
                   <div className="text-[10px] text-emerald-800 font-normal">Sum of Checkpoints 1–6</div>
                 </td>
-                <td className="py-2.5 px-2.5 text-right font-extrabold text-amber-950 bg-amber-100/50">
-                  {formatBDT(achieved.target || 0)}
-                </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-slate-900">
                   {formatBDT(achieved.new_sales)}
                 </td>
@@ -690,6 +670,10 @@ export default function TablePerformanceByPeriod({
                 </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-emerald-900 bg-emerald-100/60 border-r border-emerald-300">
                   {formatBDT(achieved.total_collection)}
+                </td>
+                {/* Total Lead Summary */}
+                <td className="py-2.5 px-2 text-center font-extrabold text-indigo-900 bg-indigo-50 font-mono">
+                  {formatNumber(achieved.fair_leads + achieved.fb_leads)}
                 </td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fair_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fb_leads)}</td>
@@ -714,14 +698,19 @@ export default function TablePerformanceByPeriod({
                   <div>Achievement %</div>
                   <div className="text-[10px] text-slate-600 font-normal">Achieved ÷ Target</div>
                 </td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-amber-900 bg-amber-200/50">
-                  {achievementPct.target || 0}%
-                </td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.new_sales}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.tb_amount}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.emi_amount}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-950 bg-emerald-200/50 border-r border-slate-300">
                   {achievementPct.total_collection}%
+                </td>
+                {/* Total Lead % */}
+                <td className="py-2 px-2 text-center font-extrabold text-indigo-900 font-mono">
+                  {(() => {
+                    const tgtTotal = (targetPeriod?.fair_leads || 0) + (targetPeriod?.fb_leads || 0);
+                    const achTotal = achieved.fair_leads + achieved.fb_leads;
+                    return tgtTotal > 0 ? Math.round((achTotal / tgtTotal) * 10000) / 100 + '%' : '—';
+                  })()}
                 </td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fair_leads}%</td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fb_leads}%</td>
@@ -790,19 +779,7 @@ export default function TablePerformanceByPeriod({
                       <h5 className="text-xs font-bold uppercase tracking-wider text-emerald-900 mb-2">
                         Financial Collections (BDT)
                       </h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Target</label>
-                          <input
-                            type="number"
-                            step="500"
-                            min="0"
-                            disabled={disabled}
-                            value={period.target || ''}
-                            onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-900"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="text-[11px] font-semibold text-slate-600 block mb-1">New Sales</label>
                           <input
@@ -844,9 +821,14 @@ export default function TablePerformanceByPeriod({
 
                     {/* Leads Fields */}
                     <div>
-                      <h5 className="text-xs font-bold uppercase tracking-wider text-blue-900 mb-2">
-                        Lead Pipeline
-                      </h5>
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-xs font-bold uppercase tracking-wider text-blue-900">
+                          Lead Pipeline
+                        </h5>
+                        <span className="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                          Total Lead: {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
+                        </span>
+                      </div>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div>
                           <label className="text-[11px] font-semibold text-slate-600 block mb-1">Fair Leads</label>

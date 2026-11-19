@@ -6,7 +6,6 @@ import { fetchScorecard } from '@/lib/api/scorecard';
 import { ScorecardResponse, PeriodItem, CustomerItem } from '@/types/scorecard';
 import { 
   formatNumber, 
-  calculatePeriodTotalCollection, 
   calculateTotalAchieved, 
   calculateCustomerTotalCollection 
 } from '@/lib/calculations';
@@ -45,7 +44,10 @@ function ScorecardPrintContent() {
 
   const [scorecard, setScorecard] = useState<ScorecardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  // Default to Landscape for optimal 18-column Excel sheet fidelity
+  const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
+  // Row limit control to guarantee single-page (1/1) print with zero spillover
+  const [rowLimit, setRowLimit] = useState<number>(8);
 
   useEffect(() => {
     async function load() {
@@ -71,8 +73,8 @@ function ScorecardPrintContent() {
     );
   }
 
-  const targetPeriod = scorecard.periods.find(p => p.period_index === 0) || {} as PeriodItem;
-  const achieved = calculateTotalAchieved(scorecard.periods);
+  const targetPeriod = scorecard.periods?.find(p => p.period_index === 0) || {} as PeriodItem;
+  const achieved = calculateTotalAchieved(scorecard.periods || []);
   const employee = scorecard.employee;
 
   // Period mappings: 1=Till 5th, 2=Till 10th, 3=Till 15th, 4=Till 20th, 5=Till 25th, 6=Till 30/31st
@@ -92,13 +94,11 @@ function ScorecardPrintContent() {
 
   const isPortrait = orientation === 'portrait';
 
-  // Target customer rows tuned strictly to guarantee single-page (1/1) print with zero spillover
-  // Portrait: 20 rows leaves a safe margin so page 2 is never triggered
-  // Landscape: 12 rows perfectly fills the landscape canvas without overflow
+  // Target customer rows tuned strictly to guarantee single-page (1/1) print
   const customers = scorecard.customers || [];
-  const TARGET_CUSTOMER_ROWS = isPortrait ? Math.max(20, customers.length) : Math.max(12, customers.length);
+  const targetRowCount = Math.max(rowLimit, customers.length);
   const paddedCustomerRows: (CustomerItem | null)[] = [...customers];
-  while (paddedCustomerRows.length < TARGET_CUSTOMER_ROWS) {
+  while (paddedCustomerRows.length < targetRowCount) {
     paddedCustomerRows.push(null);
   }
 
@@ -110,7 +110,7 @@ function ScorecardPrintContent() {
           @media print {
             @page {
               size: ${isPortrait ? 'portrait A4' : 'landscape A4'};
-              margin: 6mm 6mm;
+              margin: 4mm 4mm;
             }
             html, body {
               background: #fff !important;
@@ -118,6 +118,8 @@ function ScorecardPrintContent() {
               margin: 0 !important;
               padding: 0 !important;
               height: 100% !important;
+              max-height: 100vh !important;
+              overflow: hidden !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
@@ -130,6 +132,8 @@ function ScorecardPrintContent() {
               break-inside: avoid !important;
               page-break-after: avoid !important;
               break-after: avoid !important;
+              page-break-before: avoid !important;
+              break-before: avoid !important;
             }
           }
         `
@@ -145,10 +149,37 @@ function ScorecardPrintContent() {
           <span>Back to Interactive Scorecard</span>
         </Link>
 
-        {/* Orientation Switcher & Print Trigger */}
+        {/* Orientation Switcher, Row Count & Print Trigger */}
         <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-1 text-xs text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+            <span className="font-semibold text-slate-700">Customer Rows:</span>
+            <select
+              value={rowLimit}
+              onChange={(e) => setRowLimit(parseInt(e.target.value, 10))}
+              className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-medium cursor-pointer"
+            >
+              <option value={6}>6 Rows</option>
+              <option value={8}>8 Rows (Recommended - 1 Page)</option>
+              <option value={10}>10 Rows</option>
+              <option value={12}>12 Rows</option>
+            </select>
+          </div>
+
           <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
             <button
+              type="button"
+              onClick={() => setOrientation('landscape')}
+              className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-bold transition ${
+                !isPortrait 
+                  ? 'bg-black text-white shadow-sm' 
+                  : 'text-slate-600 hover:text-black'
+              }`}
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>Landscape A4 (Recommended)</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setOrientation('portrait')}
               className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-bold transition ${
                 isPortrait 
@@ -159,20 +190,10 @@ function ScorecardPrintContent() {
               <LayoutTemplate className="w-3.5 h-3.5" />
               <span>Portrait A4</span>
             </button>
-            <button
-              onClick={() => setOrientation('landscape')}
-              className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-bold transition ${
-                !isPortrait 
-                  ? 'bg-black text-white shadow-sm' 
-                  : 'text-slate-600 hover:text-black'
-              }`}
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Landscape A4</span>
-            </button>
           </div>
 
           <button
+            type="button"
             onClick={() => window.print()}
             className="flex items-center space-x-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-md transition cursor-pointer"
           >
@@ -188,13 +209,13 @@ function ScorecardPrintContent() {
       <div 
         className={`scorecard-sheet mx-auto bg-white border-[1.5px] border-black text-black select-none shadow-lg print:shadow-none transition-all ${
           isPortrait 
-            ? 'w-full max-w-[200mm] text-[8px]' 
-            : 'w-full max-w-[287mm] text-[9px]'
+            ? 'w-full max-w-[200mm] text-[7.5px]' 
+            : 'w-full max-w-[287mm] text-[8.5px]'
         }`}
       >
         
-        {/* ROW 1: TOP HEADER INFO */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-bold ${isPortrait ? 'h-[28px]' : 'h-[34px]'}`}>
+        {/* ROW 1: TOP HEADER INFO (18 cols) */}
+        <div className={`grid grid-cols-18 border-b border-black text-center font-bold ${isPortrait ? 'h-[26px]' : 'h-[28px]'}`}>
           <div className="col-span-1 p-0.5 bg-slate-50 border-r border-black flex items-center justify-center font-extrabold text-center leading-tight">
             Name
           </div>
@@ -207,7 +228,7 @@ function ScorecardPrintContent() {
             Position
           </div>
           <div className="col-span-2 p-0.5 border-r border-black flex items-center justify-center font-semibold truncate px-1">
-            {employee?.designation || 'Executive'}
+            {employee?.designation || 'Administrator'}
           </div>
           <div className="col-span-2 p-0.5 border-r border-black flex flex-col justify-center items-center bg-slate-50 leading-tight">
             <span className="text-[0.85em]">Marking (Out of 100)</span>
@@ -227,63 +248,63 @@ function ScorecardPrintContent() {
           </div>
         </div>
 
-        {/* ROW 2: PORTFOLIO & LEAD SUMMARY METRICS */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-bold bg-white ${isPortrait ? 'h-[32px] text-[7px]' : 'h-[38px] text-[8.5px]'}`}>
+        {/* ROW 2: PORTFOLIO & LEAD SUMMARY METRICS (18 cols) */}
+        <div className={`grid grid-cols-18 border-b border-black text-center font-bold bg-white ${isPortrait ? 'h-[28px] text-[7px]' : 'h-[32px] text-[8px]'}`}>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">EMI Due Monthly</span>
-            <span className="font-mono font-bold text-[1.1em]">{formatNumber(scorecard.emi_due_monthly)}</span>
+            <span className="font-mono font-bold text-[1.05em]">{formatNumber(scorecard.emi_due_monthly)}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI Client</span>
-            <span className="font-mono text-[1.1em]">{scorecard.emi_client_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.emi_client_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI Hold</span>
-            <span className="font-mono text-[1.1em]">{scorecard.emi_hold_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.emi_hold_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">EMI cancel</span>
-            <span className="font-mono text-[1.1em]">{scorecard.emi_cancel_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.emi_cancel_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">TB Due</span>
-            <span className="font-mono font-bold text-[1.1em]">{formatNumber(scorecard.tb_due_amount)}</span>
+            <span className="font-mono font-bold text-[1.05em]">{formatNumber(scorecard.tb_due_amount)}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Client</span>
-            <span className="font-mono text-[1.1em]">{scorecard.tb_client_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.tb_client_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Share</span>
-            <span className="font-mono text-[1.1em]">{scorecard.tb_share_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.tb_share_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB Hold</span>
-            <span className="font-mono text-[1.1em]">{scorecard.tb_hold_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.tb_hold_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">TB cancel</span>
-            <span className="font-mono text-[1.1em]">{scorecard.tb_cancel_count || ''}</span>
+            <span className="font-mono text-[1.05em]">{scorecard.tb_cancel_count || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Total Fair Lead</span>
-            <span className="font-mono text-[1.1em]">{achieved.fair_leads || ''}</span>
+            <span className="font-mono text-[1.05em]">{achieved.fair_leads || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Total FB Lead</span>
-            <span className="font-mono text-[1.1em]">{achieved.fb_leads || ''}</span>
+            <span className="font-mono text-[1.05em]">{achieved.fb_leads || ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Sheet Score</span>
-            <span className="font-mono font-bold text-[1.1em]">{scorecard.sheet_score ?? ''}</span>
+            <span className="font-mono font-bold text-[1.05em]">{scorecard.sheet_score ?? ''}</span>
           </div>
           <div className="col-span-1 p-0.5 border-r border-black flex flex-col justify-between py-0.5">
             <span className="leading-none">Call Score</span>
-            <span className="font-mono font-bold text-[1.1em]">{scorecard.call_score ?? ''}</span>
+            <span className="font-mono font-bold text-[1.05em]">{scorecard.call_score ?? ''}</span>
           </div>
           <div className="col-span-2 p-0.5 border-r border-black flex flex-col justify-between bg-slate-50 py-0.5">
             <span className="leading-none">Prediction Amt from Emp</span>
-            <span className="font-mono font-extrabold text-[1.1em]">{formatNumber(scorecard.prediction_amount)}</span>
+            <span className="font-mono font-extrabold text-[1.05em]">{formatNumber(scorecard.prediction_amount)}</span>
           </div>
           <div className="col-span-3 p-0.5 flex items-center justify-center text-slate-300">
             {/* Blank right box matching sheet */}
@@ -291,20 +312,20 @@ function ScorecardPrintContent() {
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* TABLE 1: WEEKLY ACTIVITY                                    */}
+        {/* TABLE 1: WEEKLY ACTIVITY (TARGET REMOVED, TOTAL LEAD ADDED) */}
         {/* ----------------------------------------------------------- */}
-        {/* Table 1 Header Row (18 columns) */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[24px] text-[7px]' : 'h-[28px] text-[8px]'}`}>
+        {/* Table 1 Header Row: Target removed from left; Total Lead added between EMI & Current Fair Lead */}
+        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[22px] text-[6.5px]' : 'h-[24px] text-[7.5px]'}`}>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Month</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Target</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Token to Booking</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">EMI</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight font-black bg-slate-200/70">Total Lead</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Current Fair Lead</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Current FB Leads</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">HP</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">P</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Fup</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">HP</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">P</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">Fup</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Total Calls Dialed</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Hold</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Cancel</div>
@@ -317,7 +338,7 @@ function ScorecardPrintContent() {
 
         {/* Historical Rows: M-3, M-2, M-1 */}
         {[m3, m2, m1].map((histLabel, idx) => (
-          <div key={idx} className={`grid grid-cols-18 border-b border-black text-center bg-white ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
+          <div key={`hist-${idx}`} className={`grid grid-cols-18 border-b border-black text-center bg-white ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
               {histLabel}
             </div>
@@ -331,12 +352,9 @@ function ScorecardPrintContent() {
 
         {/* Target Benchmark Row (TG) */}
         {targetPeriod && (
-          <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
+          <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-extrabold bg-amber-100/60">
               TG (Target)
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(calculatePeriodTotalCollection(targetPeriod))}
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
               {formatNumber(targetPeriod.new_sales)}
@@ -346,6 +364,10 @@ function ScorecardPrintContent() {
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
               {formatNumber(targetPeriod.emi_amount)}
+            </div>
+            {/* Total Lead = Fair Leads + FB Leads */}
+            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono font-bold bg-amber-100/40">
+              {((targetPeriod.fair_leads || 0) + (targetPeriod.fb_leads || 0)) || ''}
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
               {targetPeriod.fair_leads || ''}
@@ -389,17 +411,14 @@ function ScorecardPrintContent() {
           </div>
         )}
 
-        {/* 6 Periodic Activity Rows: Till 5th, Till 10th, Till 15th, Till 20th, Till 25th, Till 30/31st */}
+        {/* 6 Periodic Activity Checkpoint Rows: Till 5th .. Till 30/31st */}
         {periodRows.map((pRow) => {
-          const p = scorecard.periods.find(item => item.period_index === pRow.idx) || {} as PeriodItem;
-          const tc = calculatePeriodTotalCollection(p);
+          const p = scorecard.periods?.find(item => item.period_index === pRow.idx) || {} as PeriodItem;
+          const totalLeadVal = (p.fair_leads || 0) + (p.fb_leads || 0);
           return (
-            <div key={pRow.idx} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[21px] text-[7.5px]' : 'h-[24px] text-[8.5px]'}`}>
+            <div key={`prow-${pRow.idx}`} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
                 {pRow.label}
-              </div>
-              <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-bold font-mono">
-                {tc > 0 ? formatNumber(tc) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
                 {p.new_sales ? formatNumber(p.new_sales) : ''}
@@ -409,6 +428,10 @@ function ScorecardPrintContent() {
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
                 {p.emi_amount ? formatNumber(p.emi_amount) : ''}
+              </div>
+              {/* Total Lead Column */}
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-bold font-mono bg-slate-50">
+                {totalLeadVal > 0 ? formatNumber(totalLeadVal) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.fair_leads || ''}
@@ -456,8 +479,8 @@ function ScorecardPrintContent() {
         {/* ----------------------------------------------------------- */}
         {/* TABLE 2: PREDICTION PAYMENT (CUSTOMER COLLECTION PLAN)      */}
         {/* ----------------------------------------------------------- */}
-        {/* Header Row for Prediction Payment */}
-        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[24px] text-[7px]' : 'h-[28px] text-[8px]'}`}>
+        {/* Header Row for Prediction Payment (18 cols) */}
+        <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[22px] text-[6.5px]' : 'h-[24px] text-[7.5px]'}`}>
           <div className="col-span-2 p-0.5 border-r border-black flex items-center justify-center leading-none">Cx Name</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Paid</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Unpaid</div>
@@ -476,16 +499,16 @@ function ScorecardPrintContent() {
           <div className="col-span-2 p-0.5 flex items-center justify-center leading-none">Remarks</div>
         </div>
 
-        {/* Customer Data / Blank Rows - Compacted to safely fit exactly 1 page */}
+        {/* Customer Data / Blank Rows - Compacted to strictly fit exactly 1 page */}
         {paddedCustomerRows.map((c, rIdx) => {
           const tc = c ? calculateCustomerTotalCollection(c) : 0;
           return (
             <div 
-              key={rIdx} 
+              key={`cx-${rIdx}`} 
               className={`grid grid-cols-18 border-b border-black last:border-b-0 ${
                 isPortrait 
-                  ? 'h-[21px] text-[7.5px]' 
-                  : 'h-[24px] text-[8.5px]'
+                  ? 'h-[18px] text-[7px]' 
+                  : 'h-[19px] text-[8px]'
               }`}
             >
               <div className="col-span-2 p-0.5 border-r border-black px-1 flex items-center font-semibold truncate">
