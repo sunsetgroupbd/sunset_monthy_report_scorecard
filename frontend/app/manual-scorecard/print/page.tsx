@@ -6,7 +6,6 @@ import { fetchScorecard } from '@/lib/api/scorecard';
 import { ScorecardResponse, PeriodItem, CustomerItem } from '@/types/scorecard';
 import { 
   formatNumber, 
-  calculatePeriodTotalCollection,
   calculateTotalAchieved, 
   calculateCustomerTotalCollection 
 } from '@/lib/calculations';
@@ -74,7 +73,6 @@ function ScorecardPrintContent() {
     );
   }
 
-  const targetPeriod = scorecard.periods?.find(p => p.period_index === 0) || {} as PeriodItem;
   const achieved = calculateTotalAchieved(scorecard.periods || []);
   const employee = scorecard.employee;
 
@@ -313,12 +311,11 @@ function ScorecardPrintContent() {
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* TABLE 1: WEEKLY ACTIVITY (TG IN TG ROW, TOTAL LEAD ADDED)   */}
+        {/* TABLE 1: ACTIVITY TRACKING (NO TG COLUMN, NO TG ROW)        */}
         {/* ----------------------------------------------------------- */}
-        {/* Table 1 Header Row: TG column added; Total Lead added between EMI & Current Fair Lead */}
+        {/* Table 1 Header Row: 18 columns starting directly with New Sales */}
         <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[22px] text-[6.5px]' : 'h-[24px] text-[7.5px]'}`}>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Month</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">TG</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Token to Booking</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">EMI</div>
@@ -334,7 +331,8 @@ function ScorecardPrintContent() {
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">In done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Out Done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold from Fair Leads</div>
-          <div className="p-0.5 flex items-center justify-center leading-tight">Sold From FB Leads</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold from FB Leads</div>
+          <div className="p-0.5 flex items-center justify-center leading-tight">Sold from Other Leads</div>
         </div>
 
         {/* Historical Rows: M-3, M-2, M-1 */}
@@ -351,69 +349,7 @@ function ScorecardPrintContent() {
           </div>
         ))}
 
-        {/* Target Benchmark Row (TG) */}
-        {targetPeriod && (
-          <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-extrabold bg-amber-100/60">
-              TG
-            </div>
-            {/* TG column value in TG Row */}
-            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.target || calculatePeriodTotalCollection(targetPeriod) || 0)}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.new_sales || 0)}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.tb_amount || 0)}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.emi_amount || 0)}
-            </div>
-            {/* Total Lead in TG Row */}
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {((targetPeriod.fair_leads || 0) + (targetPeriod.fb_leads || 0)) || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.fair_leads || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.fb_leads || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.hp || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.p || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.fup || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.dialed_calls || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.hold || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.cancel || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.indoor_cx || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.outdoor_visits || ''}
-            </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.sold_fair_leads || ''}
-            </div>
-            <div className="p-0.5 flex items-center justify-center font-mono">
-              {targetPeriod.sold_fb_leads || ''}
-            </div>
-          </div>
-        )}
-
-        {/* 6 Periodic Activity Checkpoint Rows: Till 5th .. Till 30/31st */}
+        {/* 6 Periodic Activity Checkpoint Rows: Till 5th .. Till 30/31st (NO TG ROW) */}
         {periodRows.map((pRow) => {
           const p = scorecard.periods?.find(item => item.period_index === pRow.idx) || {} as PeriodItem;
           const totalLeadVal = (p.fair_leads || 0) + (p.fb_leads || 0);
@@ -422,17 +358,14 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
                 {pRow.label}
               </div>
-              {/* TG column is blank for checkpoint rows */}
-              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
+              <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
+                {p.new_sales ? formatNumber(p.new_sales) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {formatNumber(p.new_sales || 0)}
+                {p.tb_amount ? formatNumber(p.tb_amount) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {formatNumber(p.tb_amount || 0)}
-              </div>
-              <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {formatNumber(p.emi_amount || 0)}
+                {p.emi_amount ? formatNumber(p.emi_amount) : ''}
               </div>
               {/* Total Lead Column */}
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
@@ -471,8 +404,11 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.sold_fair_leads || ''}
               </div>
-              <div className="p-0.5 flex items-center justify-center font-mono">
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.sold_fb_leads || ''}
+              </div>
+              <div className="p-0.5 flex items-center justify-center font-mono">
+                {p.sold_other_leads || ''}
               </div>
             </div>
           );
