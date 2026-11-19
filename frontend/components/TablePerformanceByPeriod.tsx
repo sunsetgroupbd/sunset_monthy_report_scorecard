@@ -6,27 +6,26 @@ import {
   formatBDT, 
   formatNumber, 
   calculatePeriodTotalCollection,
-  calculateTotalAchieved,
-  calculateAchievementPct
+  calculateTotalAchieved
 } from '@/lib/calculations';
 import { 
   Table, 
   LayoutList, 
-  Sparkles, 
   Edit3, 
   ChevronDown, 
   ChevronUp,
-  Target
+  Layers,
+  Sparkles
 } from 'lucide-react';
 
 interface PerformanceByPeriodProps {
   periods: PeriodItem[];
   onChangePeriod: (index: number, field: keyof PeriodMetrics, value: any) => void;
   disabled: boolean;
+  month?: string;
 }
 
-const PERIOD_LABELS: Record<number, { title: string; subtitle: string }> = {
-  0: { title: 'TG (Target)', subtitle: 'Monthly Benchmark' },
+const CHECKPOINT_LABELS: Record<number, { title: string; subtitle: string }> = {
   1: { title: 'Till 5th', subtitle: 'Day 1–5' },
   2: { title: 'Till 10th', subtitle: 'Day 6–10' },
   3: { title: 'Till 15th', subtitle: 'Day 11–15' },
@@ -35,10 +34,31 @@ const PERIOD_LABELS: Record<number, { title: string; subtitle: string }> = {
   6: { title: 'Till 30/31st', subtitle: 'Day 26–End' },
 };
 
+function getPriorMonthLabels(baseMonthStr?: string): [string, string, string] {
+  try {
+    if (!baseMonthStr) return ['Sep-26', 'Oct-26', 'Nov-26'];
+    const parts = baseMonthStr.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const m3 = new Date(year, month - 3, 1);
+    const m2 = new Date(year, month - 2, 1);
+    const m1 = new Date(year, month - 1, 1);
+    return [
+      `${monthNames[m3.getMonth()]}-${String(m3.getFullYear()).slice(-2)}`,
+      `${monthNames[m2.getMonth()]}-${String(m2.getFullYear()).slice(-2)}`,
+      `${monthNames[m1.getMonth()]}-${String(m1.getFullYear()).slice(-2)}`
+    ];
+  } catch {
+    return ['Sep-26', 'Oct-26', 'Nov-26'];
+  }
+}
+
 export default function TablePerformanceByPeriod({
   periods,
   onChangePeriod,
-  disabled
+  disabled,
+  month = '2026-12'
 }: PerformanceByPeriodProps) {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({
@@ -47,9 +67,9 @@ export default function TablePerformanceByPeriod({
   const [overrideModalPeriod, setOverrideModalPeriod] = useState<number | null>(null);
   const [overrideInputVal, setOverrideInputVal] = useState<string>('');
 
-  const targetPeriod = periods.find(p => p.period_index === 0);
+  const totalLeadPeriod = periods.find(p => p.period_index === 0);
   const achieved = calculateTotalAchieved(periods);
-  const achievementPct = calculateAchievementPct(achieved, targetPeriod);
+  const [m3, m2, m1] = getPriorMonthLabels(month);
 
   const toggleCard = (idx: number) => {
     setExpandedCards(prev => ({ ...prev, [idx]: !prev[idx] }));
@@ -73,6 +93,21 @@ export default function TablePerformanceByPeriod({
     setOverrideModalPeriod(null);
   };
 
+  // Automated monthly accumulated lead counts
+  const totalFairLeads = (totalLeadPeriod?.fair_leads || 0) > 0 ? (totalLeadPeriod?.fair_leads || 0) : achieved.fair_leads;
+  const totalFbLeads = (totalLeadPeriod?.fb_leads || 0) > 0 ? (totalLeadPeriod?.fb_leads || 0) : achieved.fb_leads;
+  const totalHpLeads = (totalLeadPeriod?.hp || 0) > 0 ? (totalLeadPeriod?.hp || 0) : achieved.hp;
+  const totalPLeads = (totalLeadPeriod?.p || 0) > 0 ? (totalLeadPeriod?.p || 0) : achieved.p;
+  const totalFupLeads = (totalLeadPeriod?.fup || 0) > 0 ? (totalLeadPeriod?.fup || 0) : achieved.fup;
+  const totalDialedCalls = (totalLeadPeriod?.dialed_calls || 0) > 0 ? (totalLeadPeriod?.dialed_calls || 0) : achieved.dialed_calls;
+  const totalHold = (totalLeadPeriod?.hold || 0) > 0 ? (totalLeadPeriod?.hold || 0) : (achieved.hold || 0);
+  const totalCancel = (totalLeadPeriod?.cancel || 0) > 0 ? (totalLeadPeriod?.cancel || 0) : (achieved.cancel || 0);
+  const totalIndoorCx = (totalLeadPeriod?.indoor_cx || 0) > 0 ? (totalLeadPeriod?.indoor_cx || 0) : achieved.indoor_cx;
+  const totalOutdoorVisits = (totalLeadPeriod?.outdoor_visits || 0) > 0 ? (totalLeadPeriod?.outdoor_visits || 0) : achieved.outdoor_visits;
+  const totalSoldFair = (totalLeadPeriod?.sold_fair_leads || 0) > 0 ? (totalLeadPeriod?.sold_fair_leads || 0) : (achieved.sold_fair_leads || 0);
+  const totalSoldFb = (totalLeadPeriod?.sold_fb_leads || 0) > 0 ? (totalLeadPeriod?.sold_fb_leads || 0) : (achieved.sold_fb_leads || 0);
+  const totalSoldOther = (totalLeadPeriod?.sold_other_leads || 0) > 0 ? (totalLeadPeriod?.sold_other_leads || 0) : (achieved.sold_other_leads || 0);
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
       {/* Table Header and View Mode Toggle */}
@@ -84,7 +119,7 @@ export default function TablePerformanceByPeriod({
               Table 1: Monthly Performance & Activity Tracking
             </h2>
             <p className="text-xs text-slate-500">
-              Checkpoint performance metrics (Till 5th to Till 30/31st), Target, Achieved Totals, and Achievement %.
+              Historical months, Total Lead summary, and Checkpoint progress (Till 5th to Till 30/31st).
             </p>
           </div>
         </div>
@@ -120,7 +155,7 @@ export default function TablePerformanceByPeriod({
               Manual Override: Total Collection
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              {PERIOD_LABELS[overrideModalPeriod]?.title} ({PERIOD_LABELS[overrideModalPeriod]?.subtitle})
+              {CHECKPOINT_LABELS[overrideModalPeriod]?.title} ({CHECKPOINT_LABELS[overrideModalPeriod]?.subtitle})
             </p>
 
             <div className="mb-4">
@@ -175,7 +210,7 @@ export default function TablePerformanceByPeriod({
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* 1. TABLE VIEW WITH HORIZONTAL SCROLL & STICKY COLUMN         */}
+      {/* 1. TABLE VIEW: EXACT ORDER WITHOUT TARGET                    */}
       {/* ------------------------------------------------------------- */}
       {viewMode === 'table' ? (
         <div className="overflow-x-auto relative border border-slate-200 rounded-xl shadow-xs">
@@ -184,9 +219,9 @@ export default function TablePerformanceByPeriod({
               {/* Category Grouping Headers */}
               <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-extrabold uppercase text-[10px] tracking-wider whitespace-nowrap">
                 <th className="py-2 px-3 sticky left-0 z-30 bg-slate-100 border-r border-slate-200">
-                  Checkpoint
+                  Month / Checkpoint
                 </th>
-                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
+                <th colSpan={4} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
                   Financial Performance & Collections (BDT)
                 </th>
                 <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
@@ -200,240 +235,130 @@ export default function TablePerformanceByPeriod({
                 </th>
               </tr>
 
-              {/* Sub-column Headers */}
+              {/* Sub-column Headers: Exact requested column order */}
               <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-[11px] whitespace-nowrap">
-                <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Period</th>
-                {/* Financial with dedicated Target */}
-                <th className="py-2 px-2.5 min-w-[110px] bg-amber-50/50 text-amber-950 font-bold">Target</th>
+                <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Month</th>
+                {/* Financial: New Sales, Token to Booking, EMI, Total Collection */}
                 <th className="py-2 px-2.5 min-w-[100px]">New Sales</th>
-                <th className="py-2 px-2.5 min-w-[105px]">Token / Booking</th>
+                <th className="py-2 px-2.5 min-w-[110px]">Token to Booking</th>
                 <th className="py-2 px-2.5 min-w-[95px]">EMI</th>
                 <th className="py-2 px-2.5 min-w-[125px] border-r border-slate-200 bg-emerald-50/40 text-emerald-950 font-bold">
                   Total Collection
                 </th>
-                {/* Leads (Total Lead removed, Fair and FB retained) */}
-                <th className="py-2 px-2 text-center min-w-[60px]">Fair Leads</th>
-                <th className="py-2 px-2 text-center min-w-[60px]">FB Leads</th>
+                {/* Lead Pipeline: Current Fair Lead, Current FB Lead, HP, P, Fup */}
+                <th className="py-2 px-2 text-center min-w-[65px]">Current Fair Lead</th>
+                <th className="py-2 px-2 text-center min-w-[65px]">Current FB Lead</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-emerald-700">HP</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-blue-700">P</th>
                 <th className="py-2 px-2 text-center min-w-[50px] border-r border-slate-200 font-bold text-amber-700">Fup</th>
-                {/* Activities (Connected removed) */}
-                <th className="py-2 px-2 text-center min-w-[65px]">Calls Dialed</th>
+                {/* Activities: Total Calls Dialed, Hold, Cancel, In Done, Out Done */}
+                <th className="py-2 px-2 text-center min-w-[70px]">Total Calls Dialed</th>
                 <th className="py-2 px-2 text-center min-w-[50px]">Hold</th>
                 <th className="py-2 px-2 text-center min-w-[55px]">Cancel</th>
                 <th className="py-2 px-2 text-center min-w-[60px]">In Done</th>
                 <th className="py-2 px-2 text-center min-w-[60px] border-r border-slate-200">Out Done</th>
-                {/* Results (Sold Leads Breakdown) */}
-                <th className="py-2 px-2 text-center min-w-[65px]">Sold Fair</th>
-                <th className="py-2 px-2 text-center min-w-[65px]">Sold FB</th>
-                <th className="py-2 px-2 text-center min-w-[70px]">Sold Other</th>
+                {/* Results: Sold from Fair Leads, Sold from FB Leads, Sold from Other Leads */}
+                <th className="py-2 px-2 text-center min-w-[70px]">Sold from Fair Leads</th>
+                <th className="py-2 px-2 text-center min-w-[70px]">Sold from FB Leads</th>
+                <th className="py-2 px-2 text-center min-w-[75px]">Sold from Other Leads</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100 font-medium">
-              {/* Target Row (Index 0: Monthly Benchmark) */}
-              {targetPeriod && (
-                <tr className="bg-amber-50/40 text-slate-800 border-b-2 border-amber-200/80">
-                  <td className="py-2.5 px-3 sticky left-0 z-10 bg-amber-50 font-bold text-amber-900 border-r border-amber-200">
-                    <div className="flex items-center space-x-1.5">
-                      <Target className="w-3.5 h-3.5 text-amber-600" />
-                      <span>TG (Target)</span>
-                    </div>
-                    <div className="text-[10px] text-amber-700 font-normal">Monthly Benchmark</div>
+              {/* ------------------------------------------------------- */}
+              {/* HISTORICAL MONTH TRACKING ROWS (Sep-26, Oct-26, Nov-26) */}
+              {/* ------------------------------------------------------- */}
+              {[m3, m2, m1].map((histLabel, idx) => (
+                <tr key={`hist-${idx}`} className="bg-slate-50/40 text-slate-500">
+                  <td className="py-2 px-3 sticky left-0 z-10 bg-slate-100/90 font-bold text-slate-700 border-r border-slate-200">
+                    <span className="font-mono">{histLabel}</span>
                   </td>
-                  {/* Target Column */}
-                  <td className="py-1 px-1.5 bg-amber-100/50">
-                    <input
-                      type="number"
-                      step="500"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.target || ''}
-                      onChange={(e) => onChangePeriod(0, 'target', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-bold text-right text-amber-900 focus:ring-1 focus:ring-amber-500"
-                    />
-                  </td>
-                  {/* Financial inputs for Target */}
-                  <td className="py-1 px-1.5">
-                    <input
-                      type="number"
-                      step="500"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.new_sales || ''}
-                      onChange={(e) => onChangePeriod(0, 'new_sales', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1.5">
-                    <input
-                      type="number"
-                      step="500"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.tb_amount || ''}
-                      onChange={(e) => onChangePeriod(0, 'tb_amount', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1.5">
-                    <input
-                      type="number"
-                      step="500"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.emi_amount || ''}
-                      onChange={(e) => onChangePeriod(0, 'emi_amount', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1.5 px-2.5 text-right font-bold text-emerald-900 bg-amber-100/40 border-r border-amber-200">
-                    {formatBDT(calculatePeriodTotalCollection(targetPeriod))}
-                  </td>
-
-                  {/* Leads Inputs */}
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.fair_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'fair_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.fb_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'fb_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.hp || ''}
-                      onChange={(e) => onChangePeriod(0, 'hp', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center text-emerald-700 font-bold focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.p || ''}
-                      onChange={(e) => onChangePeriod(0, 'p', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center text-blue-700 font-bold focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1 border-r border-amber-200">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.fup || ''}
-                      onChange={(e) => onChangePeriod(0, 'fup', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center text-amber-700 font-bold focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-
-                  {/* Activity Inputs */}
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.dialed_calls || ''}
-                      onChange={(e) => onChangePeriod(0, 'dialed_calls', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.hold || ''}
-                      onChange={(e) => onChangePeriod(0, 'hold', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.cancel || ''}
-                      onChange={(e) => onChangePeriod(0, 'cancel', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.indoor_cx || ''}
-                      onChange={(e) => onChangePeriod(0, 'indoor_cx', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1 border-r border-amber-200">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.outdoor_visits || ''}
-                      onChange={(e) => onChangePeriod(0, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-
-                  {/* Results Inputs */}
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.sold_fair_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'sold_fair_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.sold_fb_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'sold_fb_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.sold_other_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'sold_other_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
+                  <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                  <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                  <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                  <td className="py-2 px-2.5 text-right font-mono text-slate-400 border-r border-slate-200">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400 border-r border-slate-200">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400 border-r border-slate-200">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
+                  <td className="py-2 px-2 text-center text-slate-400">—</td>
                 </tr>
-              )}
+              ))}
 
-              {/* Checkpoint Rows: 1=Till 5th, 2=Till 10th, 3=Till 15th, 4=Till 20th, 5=Till 25th, 6=Till 30/31st */}
+              {/* ------------------------------------------------------- */}
+              {/* DEDICATED TOTAL LEAD SUMMARY ROW (Replacing TG/Target)  */}
+              {/* ------------------------------------------------------- */}
+              <tr className="bg-indigo-50/70 text-slate-900 border-y-2 border-indigo-200 font-bold">
+                <td className="py-2.5 px-3 sticky left-0 z-10 bg-indigo-100 text-indigo-950 font-extrabold border-r border-indigo-300">
+                  <div className="flex items-center space-x-1.5">
+                    <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Total Lead</span>
+                  </div>
+                  <div className="text-[10px] text-indigo-800 font-normal">Monthly Accumulated Leads</div>
+                </td>
+                {/* Financial cells for Total Lead row */}
+                <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                <td className="py-2 px-2.5 text-right font-mono text-slate-400">—</td>
+                <td className="py-2 px-2.5 text-right font-mono text-slate-400 border-r border-indigo-200">—</td>
+
+                {/* Lead Pipeline Totals: Auto-computed from checkpoints */}
+                <td className="py-2 px-1 text-center font-extrabold text-indigo-950 bg-indigo-100/50 font-mono">
+                  {formatNumber(totalFairLeads)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold text-indigo-950 bg-indigo-100/50 font-mono">
+                  {formatNumber(totalFbLeads)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold text-emerald-800 bg-emerald-100/40 font-mono">
+                  {formatNumber(totalHpLeads)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold text-blue-800 bg-blue-100/40 font-mono">
+                  {formatNumber(totalPLeads)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold text-amber-800 bg-amber-100/40 border-r border-indigo-200 font-mono">
+                  {formatNumber(totalFupLeads)}
+                </td>
+
+                {/* Activity Totals */}
+                <td className="py-2 px-1 text-center font-extrabold text-indigo-950 font-mono">
+                  {formatNumber(totalDialedCalls)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalHold)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalCancel)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalIndoorCx)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold border-r border-indigo-200 font-mono">
+                  {formatNumber(totalOutdoorVisits)}
+                </td>
+
+                {/* Conversion Results Totals */}
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalSoldFair)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalSoldFb)}
+                </td>
+                <td className="py-2 px-1 text-center font-extrabold font-mono">
+                  {formatNumber(totalSoldOther)}
+                </td>
+              </tr>
+
+              {/* ------------------------------------------------------- */}
+              {/* 6 PERIODIC CHECKPOINT ROWS (Till 5th .. Till 30/31st)    */}
+              {/* ------------------------------------------------------- */}
               {[1, 2, 3, 4, 5, 6].map((idx) => {
                 const period = periods.find(p => p.period_index === idx) || { period_index: idx } as PeriodItem;
                 const totalCol = calculatePeriodTotalCollection(period);
@@ -445,28 +370,14 @@ export default function TablePerformanceByPeriod({
                     <td className="py-2.5 px-3 sticky left-0 z-10 bg-white hover:bg-slate-50 font-semibold text-slate-900 border-r border-slate-200">
                       <div className="flex items-center space-x-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                        <span>{PERIOD_LABELS[idx]?.title}</span>
+                        <span>{CHECKPOINT_LABELS[idx]?.title}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 pl-3.5">
-                        {PERIOD_LABELS[idx]?.subtitle}
+                        {CHECKPOINT_LABELS[idx]?.subtitle}
                       </div>
                     </td>
 
-                    {/* Target (Editable per period or checkpoint) */}
-                    <td className="py-1 px-1.5 bg-amber-50/20">
-                      <input
-                        type="number"
-                        step="500"
-                        min="0"
-                        disabled={disabled}
-                        value={period.target || ''}
-                        onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
-                        placeholder="0"
-                        className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-amber-500 disabled:bg-slate-50 text-slate-700"
-                      />
-                    </td>
-
-                    {/* Financial Fields */}
+                    {/* Financial: New Sales */}
                     <td className="py-1 px-1.5">
                       <input
                         type="number"
@@ -479,6 +390,7 @@ export default function TablePerformanceByPeriod({
                         className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
+                    {/* Token to Booking */}
                     <td className="py-1 px-1.5">
                       <input
                         type="number"
@@ -491,6 +403,7 @@ export default function TablePerformanceByPeriod({
                         className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
+                    {/* EMI */}
                     <td className="py-1 px-1.5">
                       <input
                         type="number"
@@ -529,7 +442,7 @@ export default function TablePerformanceByPeriod({
                       )}
                     </td>
 
-                    {/* Leads Fields */}
+                    {/* Leads Fields: Current Fair Lead & Current FB Lead */}
                     <td className="py-1 px-1">
                       <input
                         type="number"
@@ -669,15 +582,12 @@ export default function TablePerformanceByPeriod({
               })}
 
               {/* --------------------------------------------------------- */}
-              {/* SUMMARY ROW 1: TOTAL ACHIEVED (Sum of Checkpoints 1–6)    */}
+              {/* SUMMARY ROW: TOTAL ACHIEVED (Sum of Checkpoints 1–6)      */}
               {/* --------------------------------------------------------- */}
               <tr className="bg-emerald-50/70 border-t-2 border-emerald-300 font-bold text-slate-900">
                 <td className="py-2.5 px-3 sticky left-0 z-10 bg-emerald-100 text-emerald-950 font-extrabold border-r border-emerald-300">
                   <div>Total Achieved</div>
                   <div className="text-[10px] text-emerald-800 font-normal">Sum of Checkpoints 1–6</div>
-                </td>
-                <td className="py-2.5 px-2.5 text-right font-extrabold text-amber-950 bg-amber-100/50">
-                  {formatBDT(achieved.target || 0)}
                 </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-slate-900">
                   {formatBDT(achieved.new_sales)}
@@ -705,38 +615,6 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.sold_fb_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.sold_other_leads)}</td>
               </tr>
-
-              {/* --------------------------------------------------------- */}
-              {/* SUMMARY ROW 2: ACHIEVEMENT % (Achieved / Target * 100)    */}
-              {/* --------------------------------------------------------- */}
-              <tr className="bg-slate-100/80 font-extrabold text-slate-800 border-t border-slate-200">
-                <td className="py-2.5 px-3 sticky left-0 z-10 bg-slate-200 text-slate-900 border-r border-slate-300">
-                  <div>Achievement %</div>
-                  <div className="text-[10px] text-slate-600 font-normal">Achieved ÷ Target</div>
-                </td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-amber-900 bg-amber-200/50">
-                  {achievementPct.target || 0}%
-                </td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.new_sales}%</td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.tb_amount}%</td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.emi_amount}%</td>
-                <td className="py-2 px-2.5 text-right font-extrabold text-emerald-950 bg-emerald-200/50 border-r border-slate-300">
-                  {achievementPct.total_collection}%
-                </td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fair_leads}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fb_leads}%</td>
-                <td className="py-2 px-2 text-center font-extrabold text-emerald-700">{achievementPct.hp}%</td>
-                <td className="py-2 px-2 text-center font-extrabold text-blue-700">{achievementPct.p}%</td>
-                <td className="py-2 px-2 text-center font-extrabold text-amber-700 border-r border-slate-300">{achievementPct.fup}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.dialed_calls}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.hold}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.cancel}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.indoor_cx}%</td>
-                <td className="py-2 px-2 text-center font-extrabold border-r border-slate-300">{achievementPct.outdoor_visits}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_fair_leads}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_fb_leads}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_other_leads}%</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -745,28 +623,74 @@ export default function TablePerformanceByPeriod({
         /* 2. CARD MODE (Expandable period cards for mobile)            */
         /* ------------------------------------------------------------- */
         <div className="space-y-4">
-          {[0, 1, 2, 3, 4, 5, 6].map((idx) => {
+          {/* Card: Total Lead Summary */}
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/30 shadow-xs overflow-hidden">
+            <div 
+              onClick={() => toggleCard(0)}
+              className="p-4 flex items-center justify-between cursor-pointer select-none bg-indigo-100/60 hover:bg-indigo-100 transition"
+            >
+              <div className="flex items-center space-x-3">
+                <span className="w-3 h-3 rounded-full bg-indigo-600"></span>
+                <div>
+                  <h4 className="text-sm font-bold text-indigo-950">
+                    Total Lead (Monthly Accumulated Summary)
+                  </h4>
+                  <span className="text-xs text-indigo-700">
+                    Fair: <strong>{totalFairLeads}</strong> | FB: <strong>{totalFbLeads}</strong> | HP: <strong>{totalHpLeads}</strong> | P: <strong>{totalPLeads}</strong> | Fup: <strong>{totalFupLeads}</strong>
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {expandedCards[0] ? <ChevronUp className="w-5 h-5 text-indigo-600" /> : <ChevronDown className="w-5 h-5 text-indigo-600" />}
+              </div>
+            </div>
+
+            {expandedCards[0] && (
+              <div className="p-4 border-t border-indigo-100 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                  <span className="text-slate-500 block text-[10px]">Current Fair Lead</span>
+                  <span className="text-sm font-bold text-slate-900">{totalFairLeads}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                  <span className="text-slate-500 block text-[10px]">Current FB Lead</span>
+                  <span className="text-sm font-bold text-slate-900">{totalFbLeads}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                  <span className="text-emerald-700 block text-[10px] font-bold">HP</span>
+                  <span className="text-sm font-bold text-emerald-800">{totalHpLeads}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                  <span className="text-blue-700 block text-[10px] font-bold">P</span>
+                  <span className="text-sm font-bold text-blue-800">{totalPLeads}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100">
+                  <span className="text-amber-700 block text-[10px] font-bold">Fup</span>
+                  <span className="text-sm font-bold text-amber-800">{totalFupLeads}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Cards for Checkpoints 1 to 6 */}
+          {[1, 2, 3, 4, 5, 6].map((idx) => {
             const period = periods.find(p => p.period_index === idx) || { period_index: idx } as PeriodItem;
             const totalCol = calculatePeriodTotalCollection(period);
-            const isTarget = idx === 0;
             const isExpanded = expandedCards[idx] ?? false;
 
             return (
               <div 
                 key={idx} 
-                className={`rounded-xl border ${
-                  isTarget ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200 bg-white'
-                } shadow-xs overflow-hidden`}
+                className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden"
               >
                 <div 
                   onClick={() => toggleCard(idx)}
                   className="p-4 flex items-center justify-between cursor-pointer select-none bg-slate-50/60 hover:bg-slate-100/60 transition"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className={`w-3 h-3 rounded-full ${isTarget ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">
-                        {PERIOD_LABELS[idx]?.title} ({PERIOD_LABELS[idx]?.subtitle})
+                        {CHECKPOINT_LABELS[idx]?.title} ({CHECKPOINT_LABELS[idx]?.subtitle})
                       </h4>
                       <span className="text-xs text-slate-500">
                         Total Collection: <span className="font-bold text-emerald-800">{formatBDT(totalCol)}</span>
@@ -790,19 +714,7 @@ export default function TablePerformanceByPeriod({
                       <h5 className="text-xs font-bold uppercase tracking-wider text-emerald-900 mb-2">
                         Financial Collections (BDT)
                       </h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Target</label>
-                          <input
-                            type="number"
-                            step="500"
-                            min="0"
-                            disabled={disabled}
-                            value={period.target || ''}
-                            onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-900"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="text-[11px] font-semibold text-slate-600 block mb-1">New Sales</label>
                           <input
@@ -816,7 +728,7 @@ export default function TablePerformanceByPeriod({
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Token / Booking</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Token to Booking</label>
                           <input
                             type="number"
                             step="500"
@@ -849,7 +761,7 @@ export default function TablePerformanceByPeriod({
                       </h5>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Fair Leads</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Current Fair Lead</label>
                           <input
                             type="number"
                             min="0"
@@ -860,7 +772,7 @@ export default function TablePerformanceByPeriod({
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">FB Leads</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Current FB Lead</label>
                           <input
                             type="number"
                             min="0"
@@ -906,14 +818,14 @@ export default function TablePerformanceByPeriod({
                       </div>
                     </div>
 
-                    {/* Activity Fields */}
+                    {/* Activity & Conversion Fields */}
                     <div>
                       <h5 className="text-xs font-bold uppercase tracking-wider text-purple-900 mb-2">
-                        Activity & Conversion
+                        Activity & Conversion Results
                       </h5>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Calls Dialed</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Total Calls Dialed</label>
                           <input
                             type="number"
                             min="0"
@@ -942,6 +854,28 @@ export default function TablePerformanceByPeriod({
                             disabled={disabled}
                             value={period.cancel || ''}
                             onChange={(e) => onChangePeriod(idx, 'cancel', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">In Done</label>
+                          <input
+                            type="number"
+                            min="0"
+                            disabled={disabled}
+                            value={period.indoor_cx || ''}
+                            onChange={(e) => onChangePeriod(idx, 'indoor_cx', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Out Done</label>
+                          <input
+                            type="number"
+                            min="0"
+                            disabled={disabled}
+                            value={period.outdoor_visits || ''}
+                            onChange={(e) => onChangePeriod(idx, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>

@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Target, TrendingUp, CalendarDays } from 'lucide-react';
+import { TrendingUp, CalendarDays } from 'lucide-react';
 import { formatBDT } from '@/lib/calculations';
 
 interface AttendanceForecastProps {
-  target: number;
   plannedLeave: number;
   unauthorizedLeave: number;
   predictionAmount: number;
@@ -14,7 +13,6 @@ interface AttendanceForecastProps {
 }
 
 export default function AttendanceForecastCard({
-  target,
   plannedLeave,
   unauthorizedLeave,
   predictionAmount,
@@ -26,32 +24,11 @@ export default function AttendanceForecastCard({
       <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
         <CalendarDays className="w-5 h-5 text-emerald-600" />
         <h2 className="text-base font-bold text-slate-800">
-          Monthly Target & Performance Forecast
+          Attendance & Monthly Sales Forecast
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Dedicated Monthly Target (BDT) */}
-        <div className="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200/80">
-          <label className="text-xs font-bold text-amber-900 block mb-1 flex items-center justify-between">
-            <span>Target (BDT)</span>
-            <Target className="w-3.5 h-3.5 text-amber-600" />
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="5000"
-            disabled={disabled}
-            value={target || ''}
-            onChange={(e) => onChange('target', parseFloat(e.target.value) || 0)}
-            placeholder="0"
-            className="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-bold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-500"
-          />
-          <span className="text-[10px] text-amber-800/80 mt-1 font-semibold block">
-            Target: {formatBDT(target)}
-          </span>
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Prediction Amount (BDT) */}
         <div className="bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-100/80">
           <label className="text-xs font-bold text-emerald-900 block mb-1 flex items-center justify-between">
