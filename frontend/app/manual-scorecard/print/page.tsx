@@ -311,11 +311,12 @@ function ScorecardPrintContent() {
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* TABLE 1: ACTIVITY TRACKING (NO TG COLUMN, NO TG ROW)        */}
+        {/* TABLE 1: ACTIVITY TRACKING (TG COLUMN, NO TG ROW)           */}
         {/* ----------------------------------------------------------- */}
-        {/* Table 1 Header Row: 18 columns starting directly with New Sales */}
+        {/* Table 1 Header Row: Month -> TG -> New Sales ... (18 cols) */}
         <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[22px] text-[6.5px]' : 'h-[24px] text-[7.5px]'}`}>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Month</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">TG</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Token to Booking</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">EMI</div>
@@ -331,8 +332,7 @@ function ScorecardPrintContent() {
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">In done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Out Done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold from Fair Leads</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold from FB Leads</div>
-          <div className="p-0.5 flex items-center justify-center leading-tight">Sold from Other Leads</div>
+          <div className="p-0.5 flex items-center justify-center leading-tight">Sold From FB Leads</div>
         </div>
 
         {/* Historical Rows: M-3, M-2, M-1 */}
@@ -357,6 +357,10 @@ function ScorecardPrintContent() {
             <div key={`prow-${pRow.idx}`} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
                 {pRow.label}
+              </div>
+              {/* TG column cell (blank for checkpoint rows) */}
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
+                {/* Blank TG cell */}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
                 {p.new_sales ? formatNumber(p.new_sales) : ''}
@@ -404,11 +408,8 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.sold_fair_leads || ''}
               </div>
-              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-                {p.sold_fb_leads || ''}
-              </div>
               <div className="p-0.5 flex items-center justify-center font-mono">
-                {p.sold_other_leads || ''}
+                {p.sold_fb_leads || ''}
               </div>
             </div>
           );

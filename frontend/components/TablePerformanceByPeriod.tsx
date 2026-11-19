@@ -186,7 +186,7 @@ export default function TablePerformanceByPeriod({
                 <th className="py-2 px-3 sticky left-0 z-30 bg-slate-100 border-r border-slate-200">
                   Checkpoint
                 </th>
-                <th colSpan={4} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
+                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
                   Financial Performance & Collections (BDT)
                 </th>
                 <th colSpan={6} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
@@ -203,6 +203,7 @@ export default function TablePerformanceByPeriod({
               {/* Sub-column Headers */}
               <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-[11px] whitespace-nowrap">
                 <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Period</th>
+                <th className="py-2 px-2.5 min-w-[80px] bg-amber-50/50 text-amber-950 font-bold">TG</th>
                 <th className="py-2 px-2.5 min-w-[100px]">New Sales</th>
                 <th className="py-2 px-2.5 min-w-[105px]">Token / Booking</th>
                 <th className="py-2 px-2.5 min-w-[95px]">EMI</th>
@@ -247,6 +248,11 @@ export default function TablePerformanceByPeriod({
                       <div className="text-[10px] text-slate-400 pl-3.5">
                         {PERIOD_LABELS[idx]?.subtitle}
                       </div>
+                    </td>
+
+                    {/* TG column cell */}
+                    <td className="py-2 px-1 text-center text-slate-300 font-mono bg-slate-50/30">
+                      —
                     </td>
 
                     {/* Financial Fields */}
@@ -463,6 +469,10 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-3 sticky left-0 z-10 bg-emerald-100 text-emerald-950 font-extrabold border-r border-emerald-300">
                   <div>Total Achieved</div>
                   <div className="text-[10px] text-emerald-800 font-normal">Sum of Checkpoints 1–6</div>
+                </td>
+                {/* TG Target Benchmark */}
+                <td className="py-2.5 px-2.5 text-center font-extrabold text-amber-950 bg-amber-100/50">
+                  —
                 </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-slate-900">
                   {formatBDT(achieved.new_sales)}
