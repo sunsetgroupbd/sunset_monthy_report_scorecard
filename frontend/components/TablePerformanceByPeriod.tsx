@@ -186,7 +186,7 @@ export default function TablePerformanceByPeriod({
                 <th className="py-2 px-3 sticky left-0 z-30 bg-slate-100 border-r border-slate-200">
                   Checkpoint
                 </th>
-                <th colSpan={4} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
+                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
                   Financial Performance & Collections (BDT)
                 </th>
                 <th colSpan={6} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
@@ -203,7 +203,8 @@ export default function TablePerformanceByPeriod({
               {/* Sub-column Headers */}
               <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-[11px] whitespace-nowrap">
                 <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Period</th>
-                {/* Financial without Target on left */}
+                {/* TG Column */}
+                <th className="py-2 px-2.5 min-w-[100px] bg-amber-50/50 text-amber-950 font-bold">TG</th>
                 <th className="py-2 px-2.5 min-w-[100px]">New Sales</th>
                 <th className="py-2 px-2.5 min-w-[105px]">Token / Booking</th>
                 <th className="py-2 px-2.5 min-w-[95px]">EMI</th>
@@ -240,6 +241,19 @@ export default function TablePerformanceByPeriod({
                       <span>TG (Target)</span>
                     </div>
                     <div className="text-[10px] text-amber-700 font-normal">Monthly Benchmark</div>
+                  </td>
+                  {/* TG column in TG Row */}
+                  <td className="py-1 px-1.5 bg-amber-100/50">
+                    <input
+                      type="number"
+                      step="500"
+                      min="0"
+                      disabled={disabled}
+                      value={targetPeriod.target || ''}
+                      onChange={(e) => onChangePeriod(0, 'target', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-bold text-right text-amber-900 focus:ring-1 focus:ring-amber-500"
+                    />
                   </td>
                   {/* Financial inputs for Target */}
                   <td className="py-1 px-1.5">
@@ -442,6 +456,11 @@ export default function TablePerformanceByPeriod({
                       <div className="text-[10px] text-slate-400 pl-3.5">
                         {PERIOD_LABELS[idx]?.subtitle}
                       </div>
+                    </td>
+
+                    {/* TG Column is blank for checkpoint rows */}
+                    <td className="py-2 px-1 text-center text-slate-300 font-mono bg-slate-50/30">
+                      —
                     </td>
 
                     {/* Financial Fields */}
@@ -659,6 +678,10 @@ export default function TablePerformanceByPeriod({
                   <div>Total Achieved</div>
                   <div className="text-[10px] text-emerald-800 font-normal">Sum of Checkpoints 1–6</div>
                 </td>
+                {/* TG Target Benchmark */}
+                <td className="py-2.5 px-2.5 text-right font-extrabold text-amber-950 bg-amber-100/50">
+                  {formatBDT(targetPeriod?.target || 0)}
+                </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-slate-900">
                   {formatBDT(achieved.new_sales)}
                 </td>
@@ -697,6 +720,10 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-3 sticky left-0 z-10 bg-slate-200 text-slate-900 border-r border-slate-300">
                   <div>Achievement %</div>
                   <div className="text-[10px] text-slate-600 font-normal">Achieved ÷ Target</div>
+                </td>
+                {/* TG % */}
+                <td className="py-2 px-2.5 text-right font-extrabold text-amber-900 bg-amber-200/50">
+                  100%
                 </td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.new_sales}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.tb_amount}%</td>

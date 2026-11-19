@@ -6,6 +6,7 @@ import { fetchScorecard } from '@/lib/api/scorecard';
 import { ScorecardResponse, PeriodItem, CustomerItem } from '@/types/scorecard';
 import { 
   formatNumber, 
+  calculatePeriodTotalCollection,
   calculateTotalAchieved, 
   calculateCustomerTotalCollection 
 } from '@/lib/calculations';
@@ -312,11 +313,12 @@ function ScorecardPrintContent() {
         </div>
 
         {/* ----------------------------------------------------------- */}
-        {/* TABLE 1: WEEKLY ACTIVITY (TARGET REMOVED, TOTAL LEAD ADDED) */}
+        {/* TABLE 1: WEEKLY ACTIVITY (TG IN TG ROW, TOTAL LEAD ADDED)   */}
         {/* ----------------------------------------------------------- */}
-        {/* Table 1 Header Row: Target removed from left; Total Lead added between EMI & Current Fair Lead */}
+        {/* Table 1 Header Row: TG column added; Total Lead added between EMI & Current Fair Lead */}
         <div className={`grid grid-cols-18 border-b border-black text-center font-extrabold bg-slate-100 ${isPortrait ? 'h-[22px] text-[6.5px]' : 'h-[24px] text-[7.5px]'}`}>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Month</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">TG</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Token to Booking</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">EMI</div>
@@ -332,8 +334,7 @@ function ScorecardPrintContent() {
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">In done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Out Done</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold from Fair Leads</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Sold From FB Leads</div>
-          <div className="p-0.5 flex items-center justify-center leading-tight">Sold From Other Leads</div>
+          <div className="p-0.5 flex items-center justify-center leading-tight">Sold From FB Leads</div>
         </div>
 
         {/* Historical Rows: M-3, M-2, M-1 */}
@@ -356,17 +357,21 @@ function ScorecardPrintContent() {
             <div className="p-0.5 border-r border-black flex items-center justify-center font-extrabold bg-amber-100/60">
               TG (Target)
             </div>
+            {/* TG column value in TG Row */}
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.new_sales)}
+              {formatNumber(targetPeriod.target || calculatePeriodTotalCollection(targetPeriod) || 0)}
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.tb_amount)}
+              {formatNumber(targetPeriod.new_sales || 0)}
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-              {formatNumber(targetPeriod.emi_amount)}
+              {formatNumber(targetPeriod.tb_amount || 0)}
             </div>
-            {/* Total Lead = Fair Leads + FB Leads */}
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono font-bold bg-amber-100/40">
+            <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
+              {formatNumber(targetPeriod.emi_amount || 0)}
+            </div>
+            {/* Total Lead in TG Row */}
+            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
               {((targetPeriod.fair_leads || 0) + (targetPeriod.fb_leads || 0)) || ''}
             </div>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
@@ -402,11 +407,8 @@ function ScorecardPrintContent() {
             <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
               {targetPeriod.sold_fair_leads || ''}
             </div>
-            <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-              {targetPeriod.sold_fb_leads || ''}
-            </div>
             <div className="p-0.5 flex items-center justify-center font-mono">
-              {targetPeriod.sold_other_leads || ''}
+              {targetPeriod.sold_fb_leads || ''}
             </div>
           </div>
         )}
@@ -420,17 +422,20 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
                 {pRow.label}
               </div>
-              <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {p.new_sales ? formatNumber(p.new_sales) : ''}
+              {/* TG column is blank for checkpoint rows */}
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {p.tb_amount ? formatNumber(p.tb_amount) : ''}
+                {formatNumber(p.new_sales || 0)}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
-                {p.emi_amount ? formatNumber(p.emi_amount) : ''}
+                {formatNumber(p.tb_amount || 0)}
+              </div>
+              <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
+                {formatNumber(p.emi_amount || 0)}
               </div>
               {/* Total Lead Column */}
-              <div className="p-0.5 border-r border-black flex items-center justify-center font-bold font-mono bg-slate-50">
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {totalLeadVal > 0 ? formatNumber(totalLeadVal) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
@@ -466,11 +471,8 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.sold_fair_leads || ''}
               </div>
-              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-                {p.sold_fb_leads || ''}
-              </div>
               <div className="p-0.5 flex items-center justify-center font-mono">
-                {p.sold_other_leads || ''}
+                {p.sold_fb_leads || ''}
               </div>
             </div>
           );
