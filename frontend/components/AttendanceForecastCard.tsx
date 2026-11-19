@@ -1,22 +1,22 @@
 'use client';
 
 import React from 'react';
-import { Clock, TrendingUp, CalendarDays } from 'lucide-react';
+import { Target, TrendingUp, CalendarDays } from 'lucide-react';
 import { formatBDT } from '@/lib/calculations';
 
 interface AttendanceForecastProps {
+  target: number;
   plannedLeave: number;
   unauthorizedLeave: number;
-  workingDays: number;
   predictionAmount: number;
   onChange: (field: string, value: number) => void;
   disabled: boolean;
 }
 
 export default function AttendanceForecastCard({
+  target,
   plannedLeave,
   unauthorizedLeave,
-  workingDays,
   predictionAmount,
   onChange,
   disabled
@@ -26,63 +26,30 @@ export default function AttendanceForecastCard({
       <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
         <CalendarDays className="w-5 h-5 text-emerald-600" />
         <h2 className="text-base font-bold text-slate-800">
-          Attendance & Monthly Sales Forecast
+          Monthly Target & Performance Forecast
         </h2>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Working Days */}
-        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-          <label className="text-xs font-semibold text-slate-600 block mb-1">
-            Working Days
+        {/* Dedicated Monthly Target (BDT) */}
+        <div className="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200/80">
+          <label className="text-xs font-bold text-amber-900 block mb-1 flex items-center justify-between">
+            <span>Target (BDT)</span>
+            <Target className="w-3.5 h-3.5 text-amber-600" />
           </label>
           <input
             type="number"
             min="0"
-            step="0.5"
+            step="5000"
             disabled={disabled}
-            value={workingDays || ''}
-            onChange={(e) => onChange('working_days', parseFloat(e.target.value) || 0)}
+            value={target || ''}
+            onChange={(e) => onChange('target', parseFloat(e.target.value) || 0)}
             placeholder="0"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
+            className="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-sm font-bold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-500"
           />
-          <span className="text-[10px] text-slate-400 mt-1 block">Expected business days in month</span>
-        </div>
-
-        {/* Planned Leave */}
-        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-          <label className="text-xs font-semibold text-slate-600 block mb-1">
-            Planned Leave
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            disabled={disabled}
-            value={plannedLeave || ''}
-            onChange={(e) => onChange('planned_leave', parseFloat(e.target.value) || 0)}
-            placeholder="0"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
-          />
-          <span className="text-[10px] text-slate-400 mt-1 block">Pre-approved annual or casual leave</span>
-        </div>
-
-        {/* Unauthorized Leave */}
-        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-          <label className="text-xs font-semibold text-slate-600 block mb-1">
-            Unauthorized Leave
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            disabled={disabled}
-            value={unauthorizedLeave || ''}
-            onChange={(e) => onChange('unauthorized_leave', parseFloat(e.target.value) || 0)}
-            placeholder="0"
-            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:bg-slate-100 disabled:text-slate-500"
-          />
-          <span className="text-[10px] text-slate-400 mt-1 block">Unapproved absence days</span>
+          <span className="text-[10px] text-amber-800/80 mt-1 font-semibold block">
+            Target: {formatBDT(target)}
+          </span>
         </div>
 
         {/* Prediction Amount (BDT) */}
@@ -102,8 +69,44 @@ export default function AttendanceForecastCard({
             className="w-full bg-white border border-emerald-200 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
           />
           <span className="text-[10px] text-emerald-700/80 mt-1 font-semibold block">
-            Current: {formatBDT(predictionAmount)}
+            Forecast: {formatBDT(predictionAmount)}
           </span>
+        </div>
+
+        {/* Planned Leave */}
+        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+          <label className="text-xs font-semibold text-slate-600 block mb-1">
+            Planned Leave (Days)
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            disabled={disabled}
+            value={plannedLeave || ''}
+            onChange={(e) => onChange('planned_leave', parseFloat(e.target.value) || 0)}
+            placeholder="0"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
+          />
+          <span className="text-[10px] text-slate-400 mt-1 block">Pre-approved annual or casual leave</span>
+        </div>
+
+        {/* Unauthorized Leave */}
+        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
+          <label className="text-xs font-semibold text-slate-600 block mb-1">
+            Unauthorized Leave (Days)
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            disabled={disabled}
+            value={unauthorizedLeave || ''}
+            onChange={(e) => onChange('unauthorized_leave', parseFloat(e.target.value) || 0)}
+            placeholder="0"
+            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 disabled:bg-slate-100 disabled:text-slate-500"
+          />
+          <span className="text-[10px] text-slate-400 mt-1 block">Unapproved absence days</span>
         </div>
       </div>
     </div>

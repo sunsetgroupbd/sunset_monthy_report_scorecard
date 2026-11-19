@@ -47,6 +47,11 @@ class PeriodItem(PeriodMetrics):
 class CustomerItem(BaseModel):
     id: Optional[str] = None
     customer_name: str = Field(..., min_length=1, max_length=255)
+    cx_type: Optional[str] = Field(default="New Sales", description="New Sales, TB, EMI")
+    payment_type: Optional[str] = Field(default="Paid", description="Payable Amount, Paid")
+    amount: Decimal = Field(default=Decimal("0.00"), ge=0)
+    payment_date: Optional[date] = None
+    payment_status: Optional[str] = Field(default="Paid", description="Paid, Pending")
     paid_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     unpaid_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     collection_date: Optional[date] = None
@@ -59,7 +64,7 @@ class CustomerItem(BaseModel):
     tb_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     emi_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     total_collection: Decimal = Field(default=Decimal("0.00"), ge=0)
-    lead_status: str = Field(default="HP", pattern=r"^(HP|P|FUP|NI)$")
+    lead_status: str = Field(default="HP", description="HP, P, Fup, Cancel, Hold, Next Month, Next Year, NR")
     collection_probability: int = Field(default=50, ge=10, le=100)
     remarks: Optional[str] = None
 
@@ -69,6 +74,9 @@ class CustomerItem(BaseModel):
 class ScorecardUpsertRequest(BaseModel):
     employee_id: str
     month: date  # Month representation (will be normalized to 1st of month)
+
+    # Target (BDT)
+    target: Decimal = Field(default=Decimal("0.00"), ge=0)
 
     # Attendance
     planned_leave: Decimal = Field(default=Decimal("0.0"), ge=0)
@@ -130,6 +138,9 @@ class ScorecardResponse(BaseModel):
     employee_id: str
     month: date
     status: str
+
+    # Target (BDT)
+    target: Decimal = Field(default=Decimal("0.00"))
 
     # Attendance
     planned_leave: Decimal

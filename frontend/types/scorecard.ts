@@ -1,6 +1,9 @@
 export type UserRole = 'ADMIN' | 'TL' | 'CO' | 'EMPLOYEE';
 export type ScorecardStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'CLOSED';
-export type LeadStatus = 'HP' | 'P' | 'FUP' | 'NI';
+export type LeadStatus = 'HP' | 'P' | 'Fup' | 'Cancel' | 'Hold' | 'Next Month' | 'Next Year' | 'NR';
+export type CXType = 'New Sales' | 'TB' | 'EMI';
+export type PaymentType = 'Payable Amount' | 'Paid';
+export type PaymentStatus = 'Paid' | 'Pending';
 
 export interface Team {
   id: string;
@@ -39,14 +42,15 @@ export interface Subordinate {
 }
 
 export interface PeriodMetrics {
+  target?: number; // Dedicated Target amount
   new_sales: number;
-  tb_amount: number;
+  tb_amount: number; // Token to Booking amount
   emi_amount: number;
   total_collection: number;
   total_collection_override?: number | null;
   total_achieved_override?: number | null;
 
-  total_leads: number;
+  total_leads?: number;
   fair_leads: number;
   fb_leads: number;
   hp: number;
@@ -54,10 +58,10 @@ export interface PeriodMetrics {
   fup: number;
 
   dialed_calls: number;
-  connected_calls: number;
+  connected_calls?: number;
   outdoor_visits: number;
   indoor_cx: number;
-  meeting_hours: number;
+  meeting_hours?: number;
 
   // New fields from physical scorecard
   hold?: number;
@@ -75,6 +79,11 @@ export interface PeriodItem extends PeriodMetrics {
 export interface CustomerItem {
   id?: string;
   customer_name: string;
+  cx_type?: CXType;
+  payment_type?: PaymentType;
+  amount?: number;
+  payment_date?: string;
+  payment_status?: PaymentStatus;
   paid_amount: number;
   unpaid_amount: number;
   collection_date?: string;
@@ -114,10 +123,13 @@ export interface ScorecardResponse {
   month: string;
   status: ScorecardStatus;
 
+  // Dedicated Target
+  target?: number;
+
   // Attendance
   planned_leave: number;
   unauthorized_leave: number;
-  working_days: number;
+  working_days?: number;
 
   // Forecast (BDT)
   prediction_amount: number;

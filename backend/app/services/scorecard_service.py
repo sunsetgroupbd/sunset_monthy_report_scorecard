@@ -241,6 +241,7 @@ class ScorecardService:
             employee_id=employee.id,
             month=normalized_month,
             status="DRAFT",
+            target=Decimal("0.00"),
             planned_leave=Decimal("0.0"),
             unauthorized_leave=Decimal("0.0"),
             working_days=Decimal("0.0"),

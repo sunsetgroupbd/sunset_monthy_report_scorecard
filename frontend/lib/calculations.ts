@@ -55,14 +55,14 @@ export function calculateCustomerSummary(customers: CustomerItem[]): CustomerSum
 export function calculateTotalAchieved(periods: PeriodItem[]): PeriodMetrics {
   const weekly = periods.filter(p => p.period_index >= 1 && p.period_index <= 6);
 
+  const target = weekly.reduce((sum, p) => sum + Number(p.target || 0), 0);
   const new_sales = weekly.reduce((sum, p) => sum + Number(p.new_sales || 0), 0);
   const tb_amount = weekly.reduce((sum, p) => sum + Number(p.tb_amount || 0), 0);
   const emi_amount = weekly.reduce((sum, p) => sum + Number(p.emi_amount || 0), 0);
-
-  // If any period has override, total collection reflects sum of individual period total collections
   const total_collection = weekly.reduce((sum, p) => sum + calculatePeriodTotalCollection(p), 0);
 
   return {
+    target,
     new_sales,
     tb_amount,
     emi_amount,
@@ -97,25 +97,26 @@ export function calculateAchievementPct(achieved: PeriodMetrics, target?: Period
     : 0;
 
   return {
+    target: safePct(achieved.target || 0, Number(target?.target || 0)),
     new_sales: safePct(achieved.new_sales, Number(target?.new_sales || 0)),
     tb_amount: safePct(achieved.tb_amount, Number(target?.tb_amount || 0)),
     emi_amount: safePct(achieved.emi_amount, Number(target?.emi_amount || 0)),
     total_collection: safePct(achieved.total_collection, targetTotalCollection),
-    total_leads: Math.round(safePct(achieved.total_leads, Number(target?.total_leads || 0))),
-    fair_leads: Math.round(safePct(achieved.fair_leads, Number(target?.fair_leads || 0))),
-    fb_leads: Math.round(safePct(achieved.fb_leads, Number(target?.fb_leads || 0))),
-    hp: Math.round(safePct(achieved.hp, Number(target?.hp || 0))),
-    p: Math.round(safePct(achieved.p, Number(target?.p || 0))),
-    fup: Math.round(safePct(achieved.fup, Number(target?.fup || 0))),
-    dialed_calls: Math.round(safePct(achieved.dialed_calls, Number(target?.dialed_calls || 0))),
-    connected_calls: Math.round(safePct(achieved.connected_calls, Number(target?.connected_calls || 0))),
-    outdoor_visits: Math.round(safePct(achieved.outdoor_visits, Number(target?.outdoor_visits || 0))),
-    indoor_cx: Math.round(safePct(achieved.indoor_cx, Number(target?.indoor_cx || 0))),
-    meeting_hours: safePct(achieved.meeting_hours, Number(target?.meeting_hours || 0)),
-    hold: Math.round(safePct(achieved.hold || 0, Number(target?.hold || 0))),
-    cancel: Math.round(safePct(achieved.cancel || 0, Number(target?.cancel || 0))),
-    sold_fair_leads: Math.round(safePct(achieved.sold_fair_leads || 0, Number(target?.sold_fair_leads || 0))),
-    sold_fb_leads: Math.round(safePct(achieved.sold_fb_leads || 0, Number(target?.sold_fb_leads || 0))),
-    sold_other_leads: Math.round(safePct(achieved.sold_other_leads || 0, Number(target?.sold_other_leads || 0))),
+    total_leads: safePct(achieved.total_leads || 0, Number(target?.total_leads || 0)),
+    fair_leads: safePct(achieved.fair_leads, Number(target?.fair_leads || 0)),
+    fb_leads: safePct(achieved.fb_leads, Number(target?.fb_leads || 0)),
+    hp: safePct(achieved.hp, Number(target?.hp || 0)),
+    p: safePct(achieved.p, Number(target?.p || 0)),
+    fup: safePct(achieved.fup, Number(target?.fup || 0)),
+    dialed_calls: safePct(achieved.dialed_calls, Number(target?.dialed_calls || 0)),
+    connected_calls: safePct(achieved.connected_calls || 0, Number(target?.connected_calls || 0)),
+    outdoor_visits: safePct(achieved.outdoor_visits, Number(target?.outdoor_visits || 0)),
+    indoor_cx: safePct(achieved.indoor_cx, Number(target?.indoor_cx || 0)),
+    meeting_hours: safePct(achieved.meeting_hours || 0, Number(target?.meeting_hours || 0)),
+    hold: safePct(achieved.hold || 0, Number(target?.hold || 0)),
+    cancel: safePct(achieved.cancel || 0, Number(target?.cancel || 0)),
+    sold_fair_leads: safePct(achieved.sold_fair_leads || 0, Number(target?.sold_fair_leads || 0)),
+    sold_fb_leads: safePct(achieved.sold_fb_leads || 0, Number(target?.sold_fb_leads || 0)),
+    sold_other_leads: safePct(achieved.sold_other_leads || 0, Number(target?.sold_other_leads || 0)),
   };
 }

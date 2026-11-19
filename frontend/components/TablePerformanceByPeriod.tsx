@@ -14,10 +14,9 @@ import {
   LayoutList, 
   Sparkles, 
   Edit3, 
-  Check, 
-  RotateCcw,
-  ChevronDown,
-  ChevronUp
+  ChevronDown, 
+  ChevronUp,
+  Target
 } from 'lucide-react';
 
 interface PerformanceByPeriodProps {
@@ -82,10 +81,10 @@ export default function TablePerformanceByPeriod({
           <Table className="w-5 h-5 text-emerald-600" />
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Table 1: Weekly Activity (Day 1 – End of Month)
+              Table 1: Monthly Performance & Activity Tracking
             </h2>
             <p className="text-xs text-slate-500">
-              Weekly broken-down performance metrics, monthly target, achieved totals, and achievement %.
+              Checkpoint performance metrics (Till 5th to Till 30/31st), Target, Achieved Totals, and Achievement %.
             </p>
           </div>
         </div>
@@ -148,24 +147,26 @@ export default function TablePerformanceByPeriod({
 
             <div className="flex items-center justify-between gap-2">
               <button
+                type="button"
                 onClick={handleResetOverride}
-                className="flex items-center space-x-1 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                className="px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
               >
-                <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                <span>Reset to Calc</span>
+                Reset to Auto
               </button>
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <button
+                  type="button"
                   onClick={() => setOverrideModalPeriod(null)}
-                  className="px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                  className="px-3 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleApplyOverride}
-                  className="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition"
+                  className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition"
                 >
-                  Apply Override
+                  Save Override
                 </button>
               </div>
             </div>
@@ -174,61 +175,84 @@ export default function TablePerformanceByPeriod({
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* 1. TABLE VIEW (Desktop / Tablet)                             */}
+      {/* 1. TABLE VIEW WITH HORIZONTAL SCROLL & STICKY COLUMN         */}
       {/* ------------------------------------------------------------- */}
       {viewMode === 'table' ? (
         <div className="overflow-x-auto relative border border-slate-200 rounded-xl shadow-xs">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              {/* Category Super-header */}
-              <tr className="bg-slate-100/90 text-slate-700 border-b border-slate-200 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-100 min-w-[140px] border-r border-slate-200">
-                  Period / Timeline
+              {/* Category Grouping Headers */}
+              <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-extrabold uppercase text-[10px] tracking-wider whitespace-nowrap">
+                <th className="py-2 px-3 sticky left-0 z-30 bg-slate-100 border-r border-slate-200">
+                  Checkpoint
                 </th>
-                <th colSpan={4} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
-                  Financial Collections (BDT)
+                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-emerald-50/70 text-emerald-900">
+                  Financial Performance & Collections (BDT)
                 </th>
-                <th colSpan={6} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
+                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50/70 text-blue-900">
                   Lead Pipeline
                 </th>
-                <th colSpan={5} className="py-2 px-3 text-center bg-purple-50/70 text-purple-900">
+                <th colSpan={5} className="py-2 px-3 text-center border-r border-slate-200 bg-purple-50/70 text-purple-900">
                   Activity Metrics
+                </th>
+                <th colSpan={3} className="py-2 px-3 text-center bg-amber-50/70 text-amber-900">
+                  Conversion Results
                 </th>
               </tr>
 
               {/* Sub-column Headers */}
               <tr className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold text-[11px] whitespace-nowrap">
                 <th className="py-2.5 px-3 sticky left-0 z-20 bg-slate-50 border-r border-slate-200">Period</th>
-                {/* Financial */}
+                {/* Financial with dedicated Target */}
+                <th className="py-2 px-2.5 min-w-[110px] bg-amber-50/50 text-amber-950 font-bold">Target</th>
                 <th className="py-2 px-2.5 min-w-[100px]">New Sales</th>
-                <th className="py-2 px-2.5 min-w-[100px]">TB Amount</th>
-                <th className="py-2 px-2.5 min-w-[100px]">EMI Amount</th>
-                <th className="py-2 px-2.5 min-w-[130px] border-r border-slate-200 bg-emerald-50/40 text-emerald-950 font-bold">
+                <th className="py-2 px-2.5 min-w-[105px]">Token / Booking</th>
+                <th className="py-2 px-2.5 min-w-[95px]">EMI</th>
+                <th className="py-2 px-2.5 min-w-[125px] border-r border-slate-200 bg-emerald-50/40 text-emerald-950 font-bold">
                   Total Collection
                 </th>
-                {/* Leads */}
-                <th className="py-2 px-2 text-center min-w-[60px]">Total</th>
-                <th className="py-2 px-2 text-center min-w-[55px]">Fair</th>
-                <th className="py-2 px-2 text-center min-w-[55px]">FB</th>
+                {/* Leads (Total Lead removed, Fair and FB retained) */}
+                <th className="py-2 px-2 text-center min-w-[60px]">Fair Leads</th>
+                <th className="py-2 px-2 text-center min-w-[60px]">FB Leads</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-emerald-700">HP</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-blue-700">P</th>
-                <th className="py-2 px-2 text-center min-w-[50px] border-r border-slate-200 font-bold text-amber-700">FUP</th>
-                {/* Activities */}
-                <th className="py-2 px-2 text-center min-w-[60px]">Dialed</th>
-                <th className="py-2 px-2 text-center min-w-[65px]">Connected</th>
-                <th className="py-2 px-2 text-center min-w-[65px]">Outdoor</th>
-                <th className="py-2 px-2 text-center min-w-[65px]">Indoor Cx</th>
-                <th className="py-2 px-2 text-center min-w-[70px]">Mtg Hours</th>
+                <th className="py-2 px-2 text-center min-w-[50px] border-r border-slate-200 font-bold text-amber-700">Fup</th>
+                {/* Activities (Connected removed) */}
+                <th className="py-2 px-2 text-center min-w-[65px]">Calls Dialed</th>
+                <th className="py-2 px-2 text-center min-w-[50px]">Hold</th>
+                <th className="py-2 px-2 text-center min-w-[55px]">Cancel</th>
+                <th className="py-2 px-2 text-center min-w-[60px]">In Done</th>
+                <th className="py-2 px-2 text-center min-w-[60px] border-r border-slate-200">Out Done</th>
+                {/* Results (Sold Leads Breakdown) */}
+                <th className="py-2 px-2 text-center min-w-[65px]">Sold Fair</th>
+                <th className="py-2 px-2 text-center min-w-[65px]">Sold FB</th>
+                <th className="py-2 px-2 text-center min-w-[70px]">Sold Other</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100 font-medium">
-              {/* Target Row (Index 0) */}
+              {/* Target Row (Index 0: Monthly Benchmark) */}
               {targetPeriod && (
                 <tr className="bg-amber-50/40 text-slate-800 border-b-2 border-amber-200/80">
                   <td className="py-2.5 px-3 sticky left-0 z-10 bg-amber-50 font-bold text-amber-900 border-r border-amber-200">
-                    <div>Monthly Target</div>
+                    <div className="flex items-center space-x-1.5">
+                      <Target className="w-3.5 h-3.5 text-amber-600" />
+                      <span>TG (Target)</span>
+                    </div>
                     <div className="text-[10px] text-amber-700 font-normal">Monthly Benchmark</div>
+                  </td>
+                  {/* Target Column */}
+                  <td className="py-1 px-1.5 bg-amber-100/50">
+                    <input
+                      type="number"
+                      step="500"
+                      min="0"
+                      disabled={disabled}
+                      value={targetPeriod.target || ''}
+                      onChange={(e) => onChangePeriod(0, 'target', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full bg-white border border-amber-300 rounded px-1.5 py-1 text-xs font-bold text-right text-amber-900 focus:ring-1 focus:ring-amber-500"
+                    />
                   </td>
                   {/* Financial inputs for Target */}
                   <td className="py-1 px-1.5">
@@ -272,16 +296,6 @@ export default function TablePerformanceByPeriod({
                   </td>
 
                   {/* Leads Inputs */}
-                  <td className="py-1 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      disabled={disabled}
-                      value={targetPeriod.total_leads || ''}
-                      onChange={(e) => onChangePeriod(0, 'total_leads', parseInt(e.target.value, 10) || 0)}
-                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
-                    />
-                  </td>
                   <td className="py-1 px-1">
                     <input
                       type="number"
@@ -349,8 +363,8 @@ export default function TablePerformanceByPeriod({
                       type="number"
                       min="0"
                       disabled={disabled}
-                      value={targetPeriod.connected_calls || ''}
-                      onChange={(e) => onChangePeriod(0, 'connected_calls', parseInt(e.target.value, 10) || 0)}
+                      value={targetPeriod.hold || ''}
+                      onChange={(e) => onChangePeriod(0, 'hold', parseInt(e.target.value, 10) || 0)}
                       className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
                     />
                   </td>
@@ -359,8 +373,8 @@ export default function TablePerformanceByPeriod({
                       type="number"
                       min="0"
                       disabled={disabled}
-                      value={targetPeriod.outdoor_visits || ''}
-                      onChange={(e) => onChangePeriod(0, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
+                      value={targetPeriod.cancel || ''}
+                      onChange={(e) => onChangePeriod(0, 'cancel', parseInt(e.target.value, 10) || 0)}
                       className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
                     />
                   </td>
@@ -374,21 +388,52 @@ export default function TablePerformanceByPeriod({
                       className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
                     />
                   </td>
+                  <td className="py-1 px-1 border-r border-amber-200">
+                    <input
+                      type="number"
+                      min="0"
+                      disabled={disabled}
+                      value={targetPeriod.outdoor_visits || ''}
+                      onChange={(e) => onChangePeriod(0, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
+                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </td>
+
+                  {/* Results Inputs */}
                   <td className="py-1 px-1">
                     <input
                       type="number"
                       min="0"
-                      step="0.5"
                       disabled={disabled}
-                      value={targetPeriod.meeting_hours || ''}
-                      onChange={(e) => onChangePeriod(0, 'meeting_hours', parseFloat(e.target.value) || 0)}
+                      value={targetPeriod.sold_fair_leads || ''}
+                      onChange={(e) => onChangePeriod(0, 'sold_fair_leads', parseInt(e.target.value, 10) || 0)}
+                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </td>
+                  <td className="py-1 px-1">
+                    <input
+                      type="number"
+                      min="0"
+                      disabled={disabled}
+                      value={targetPeriod.sold_fb_leads || ''}
+                      onChange={(e) => onChangePeriod(0, 'sold_fb_leads', parseInt(e.target.value, 10) || 0)}
+                      className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </td>
+                  <td className="py-1 px-1">
+                    <input
+                      type="number"
+                      min="0"
+                      disabled={disabled}
+                      value={targetPeriod.sold_other_leads || ''}
+                      onChange={(e) => onChangePeriod(0, 'sold_other_leads', parseInt(e.target.value, 10) || 0)}
                       className="w-full bg-white/90 border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500"
                     />
                   </td>
                 </tr>
               )}
 
-              {/* Weekly Periods (Till 5th through Till 30/31st) */}
+              {/* Checkpoint Rows: 1=Till 5th, 2=Till 10th, 3=Till 15th, 4=Till 20th, 5=Till 25th, 6=Till 30/31st */}
               {[1, 2, 3, 4, 5, 6].map((idx) => {
                 const period = periods.find(p => p.period_index === idx) || { period_index: idx } as PeriodItem;
                 const totalCol = calculatePeriodTotalCollection(period);
@@ -396,7 +441,7 @@ export default function TablePerformanceByPeriod({
 
                 return (
                   <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                    {/* Period Name */}
+                    {/* Period Label (Sticky) */}
                     <td className="py-2.5 px-3 sticky left-0 z-10 bg-white hover:bg-slate-50 font-semibold text-slate-900 border-r border-slate-200">
                       <div className="flex items-center space-x-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
@@ -405,6 +450,20 @@ export default function TablePerformanceByPeriod({
                       <div className="text-[10px] text-slate-400 pl-3.5">
                         {PERIOD_LABELS[idx]?.subtitle}
                       </div>
+                    </td>
+
+                    {/* Target (Editable per period or checkpoint) */}
+                    <td className="py-1 px-1.5 bg-amber-50/20">
+                      <input
+                        type="number"
+                        step="500"
+                        min="0"
+                        disabled={disabled}
+                        value={period.target || ''}
+                        onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-right focus:ring-1 focus:ring-amber-500 disabled:bg-slate-50 text-slate-700"
+                      />
                     </td>
 
                     {/* Financial Fields */}
@@ -455,7 +514,7 @@ export default function TablePerformanceByPeriod({
                             type="button"
                             onClick={() => openOverrideDialog(idx, period.total_collection_override, totalCol)}
                             title={hasOverride ? 'Manually Overridden - click to edit or reset' : 'Click to manually override'}
-                            className={`p-1 rounded transition ${
+                            className={`p-1 rounded transition cursor-pointer ${
                               hasOverride ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200'
                             }`}
                           >
@@ -471,16 +530,6 @@ export default function TablePerformanceByPeriod({
                     </td>
 
                     {/* Leads Fields */}
-                    <td className="py-1 px-1">
-                      <input
-                        type="number"
-                        min="0"
-                        disabled={disabled}
-                        value={period.total_leads || ''}
-                        onChange={(e) => onChangePeriod(idx, 'total_leads', parseInt(e.target.value, 10) || 0)}
-                        className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
-                      />
-                    </td>
                     <td className="py-1 px-1">
                       <input
                         type="number"
@@ -548,8 +597,8 @@ export default function TablePerformanceByPeriod({
                         type="number"
                         min="0"
                         disabled={disabled}
-                        value={period.connected_calls || ''}
-                        onChange={(e) => onChangePeriod(idx, 'connected_calls', parseInt(e.target.value, 10) || 0)}
+                        value={period.hold || ''}
+                        onChange={(e) => onChangePeriod(idx, 'hold', parseInt(e.target.value, 10) || 0)}
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
@@ -558,8 +607,8 @@ export default function TablePerformanceByPeriod({
                         type="number"
                         min="0"
                         disabled={disabled}
-                        value={period.outdoor_visits || ''}
-                        onChange={(e) => onChangePeriod(idx, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
+                        value={period.cancel || ''}
+                        onChange={(e) => onChangePeriod(idx, 'cancel', parseInt(e.target.value, 10) || 0)}
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
@@ -573,14 +622,45 @@ export default function TablePerformanceByPeriod({
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
+                    <td className="py-1 px-1 border-r border-slate-200">
+                      <input
+                        type="number"
+                        min="0"
+                        disabled={disabled}
+                        value={period.outdoor_visits || ''}
+                        onChange={(e) => onChangePeriod(idx, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
+                        className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
+                      />
+                    </td>
+
+                    {/* Results Fields */}
                     <td className="py-1 px-1">
                       <input
                         type="number"
                         min="0"
-                        step="0.5"
                         disabled={disabled}
-                        value={period.meeting_hours || ''}
-                        onChange={(e) => onChangePeriod(idx, 'meeting_hours', parseFloat(e.target.value) || 0)}
+                        value={period.sold_fair_leads || ''}
+                        onChange={(e) => onChangePeriod(idx, 'sold_fair_leads', parseInt(e.target.value, 10) || 0)}
+                        className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <input
+                        type="number"
+                        min="0"
+                        disabled={disabled}
+                        value={period.sold_fb_leads || ''}
+                        onChange={(e) => onChangePeriod(idx, 'sold_fb_leads', parseInt(e.target.value, 10) || 0)}
+                        className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
+                      />
+                    </td>
+                    <td className="py-1 px-1">
+                      <input
+                        type="number"
+                        min="0"
+                        disabled={disabled}
+                        value={period.sold_other_leads || ''}
+                        onChange={(e) => onChangePeriod(idx, 'sold_other_leads', parseInt(e.target.value, 10) || 0)}
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
@@ -589,12 +669,15 @@ export default function TablePerformanceByPeriod({
               })}
 
               {/* --------------------------------------------------------- */}
-              {/* SUMMARY ROW 1: TOTAL ACHIEVED (Sum of Periods 1 to 5)    */}
+              {/* SUMMARY ROW 1: TOTAL ACHIEVED (Sum of Checkpoints 1–6)    */}
               {/* --------------------------------------------------------- */}
               <tr className="bg-emerald-50/70 border-t-2 border-emerald-300 font-bold text-slate-900">
                 <td className="py-2.5 px-3 sticky left-0 z-10 bg-emerald-100 text-emerald-950 font-extrabold border-r border-emerald-300">
                   <div>Total Achieved</div>
-                  <div className="text-[10px] text-emerald-800 font-normal">Sum of Periods 1–5</div>
+                  <div className="text-[10px] text-emerald-800 font-normal">Sum of Checkpoints 1–6</div>
+                </td>
+                <td className="py-2.5 px-2.5 text-right font-extrabold text-amber-950 bg-amber-100/50">
+                  {formatBDT(achieved.target || 0)}
                 </td>
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-slate-900">
                   {formatBDT(achieved.new_sales)}
@@ -608,17 +691,19 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-emerald-900 bg-emerald-100/60 border-r border-emerald-300">
                   {formatBDT(achieved.total_collection)}
                 </td>
-                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.total_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fair_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fb_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold text-emerald-700">{formatNumber(achieved.hp)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold text-blue-700">{formatNumber(achieved.p)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold text-amber-700 border-r border-emerald-300">{formatNumber(achieved.fup)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.dialed_calls)}</td>
-                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.connected_calls)}</td>
-                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.outdoor_visits)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.hold)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.cancel)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.indoor_cx)}</td>
-                <td className="py-2.5 px-2 text-center font-extrabold">{achieved.meeting_hours} hrs</td>
+                <td className="py-2.5 px-2 text-center font-extrabold border-r border-emerald-300">{formatNumber(achieved.outdoor_visits)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.sold_fair_leads)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.sold_fb_leads)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.sold_other_leads)}</td>
               </tr>
 
               {/* --------------------------------------------------------- */}
@@ -629,23 +714,28 @@ export default function TablePerformanceByPeriod({
                   <div>Achievement %</div>
                   <div className="text-[10px] text-slate-600 font-normal">Achieved ÷ Target</div>
                 </td>
+                <td className="py-2 px-2.5 text-right font-extrabold text-amber-900 bg-amber-200/50">
+                  {achievementPct.target || 0}%
+                </td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.new_sales}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.tb_amount}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-800">{achievementPct.emi_amount}%</td>
                 <td className="py-2 px-2.5 text-right font-extrabold text-emerald-950 bg-emerald-200/50 border-r border-slate-300">
                   {achievementPct.total_collection}%
                 </td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.total_leads}%</td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fair_leads}%</td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.fb_leads}%</td>
                 <td className="py-2 px-2 text-center font-extrabold text-emerald-700">{achievementPct.hp}%</td>
                 <td className="py-2 px-2 text-center font-extrabold text-blue-700">{achievementPct.p}%</td>
                 <td className="py-2 px-2 text-center font-extrabold text-amber-700 border-r border-slate-300">{achievementPct.fup}%</td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.dialed_calls}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.connected_calls}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.outdoor_visits}%</td>
+                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.hold}%</td>
+                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.cancel}%</td>
                 <td className="py-2 px-2 text-center font-extrabold">{achievementPct.indoor_cx}%</td>
-                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.meeting_hours}%</td>
+                <td className="py-2 px-2 text-center font-extrabold border-r border-slate-300">{achievementPct.outdoor_visits}%</td>
+                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_fair_leads}%</td>
+                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_fb_leads}%</td>
+                <td className="py-2 px-2 text-center font-extrabold">{achievementPct.sold_other_leads}%</td>
               </tr>
             </tbody>
           </table>
@@ -702,54 +792,52 @@ export default function TablePerformanceByPeriod({
                       </h5>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Target</label>
+                          <input
+                            type="number"
+                            step="500"
+                            min="0"
+                            disabled={disabled}
+                            value={period.target || ''}
+                            onChange={(e) => onChangePeriod(idx, 'target', parseFloat(e.target.value) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-900"
+                          />
+                        </div>
+                        <div>
                           <label className="text-[11px] font-semibold text-slate-600 block mb-1">New Sales</label>
                           <input
                             type="number"
                             step="500"
+                            min="0"
                             disabled={disabled}
                             value={period.new_sales || ''}
                             onChange={(e) => onChangePeriod(idx, 'new_sales', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">TB Amount</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Token / Booking</label>
                           <input
                             type="number"
                             step="500"
+                            min="0"
                             disabled={disabled}
                             value={period.tb_amount || ''}
                             onChange={(e) => onChangePeriod(idx, 'tb_amount', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">EMI Amount</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">EMI</label>
                           <input
                             type="number"
                             step="500"
+                            min="0"
                             disabled={disabled}
                             value={period.emi_amount || ''}
                             onChange={(e) => onChangePeriod(idx, 'emi_amount', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
                           />
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="text-[11px] font-bold text-emerald-950">Total Collection</label>
-                            {!disabled && (
-                              <button
-                                type="button"
-                                onClick={() => openOverrideDialog(idx, period.total_collection_override, totalCol)}
-                                className="text-[10px] text-emerald-700 underline font-semibold"
-                              >
-                                Override
-                              </button>
-                            )}
-                          </div>
-                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-900">
-                            {formatBDT(totalCol)}
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -759,65 +847,60 @@ export default function TablePerformanceByPeriod({
                       <h5 className="text-xs font-bold uppercase tracking-wider text-blue-900 mb-2">
                         Lead Pipeline
                       </h5>
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Total Leads</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Fair Leads</label>
                           <input
                             type="number"
-                            disabled={disabled}
-                            value={period.total_leads || ''}
-                            onChange={(e) => onChangePeriod(idx, 'total_leads', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Fair Leads</label>
-                          <input
-                            type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.fair_leads || ''}
                             onChange={(e) => onChangePeriod(idx, 'fair_leads', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">FB Leads</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">FB Leads</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.fb_leads || ''}
                             onChange={(e) => onChangePeriod(idx, 'fb_leads', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-emerald-700 block">HP</label>
+                          <label className="text-[11px] font-semibold text-emerald-700 block mb-1">HP</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.hp || ''}
                             onChange={(e) => onChangePeriod(idx, 'hp', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center font-bold text-emerald-700"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center text-emerald-700 font-bold"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-blue-700 block">P</label>
+                          <label className="text-[11px] font-semibold text-blue-700 block mb-1">P</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.p || ''}
                             onChange={(e) => onChangePeriod(idx, 'p', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center font-bold text-blue-700"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center text-blue-700 font-bold"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-amber-700 block">FUP</label>
+                          <label className="text-[11px] font-semibold text-amber-700 block mb-1">Fup</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.fup || ''}
                             onChange={(e) => onChangePeriod(idx, 'fup', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center font-bold text-amber-700"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center text-amber-700 font-bold"
                           />
                         </div>
                       </div>
@@ -826,58 +909,73 @@ export default function TablePerformanceByPeriod({
                     {/* Activity Fields */}
                     <div>
                       <h5 className="text-xs font-bold uppercase tracking-wider text-purple-900 mb-2">
-                        Activity Metrics
+                        Activity & Conversion
                       </h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Dialed</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Calls Dialed</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
                             value={period.dialed_calls || ''}
                             onChange={(e) => onChangePeriod(idx, 'dialed_calls', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Connected</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Hold</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
-                            value={period.connected_calls || ''}
-                            onChange={(e) => onChangePeriod(idx, 'connected_calls', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            value={period.hold || ''}
+                            onChange={(e) => onChangePeriod(idx, 'hold', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Outdoor Visits</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Cancel</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
-                            value={period.outdoor_visits || ''}
-                            onChange={(e) => onChangePeriod(idx, 'outdoor_visits', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            value={period.cancel || ''}
+                            onChange={(e) => onChangePeriod(idx, 'cancel', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Indoor Cx</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Sold Fair</label>
                           <input
                             type="number"
+                            min="0"
                             disabled={disabled}
-                            value={period.indoor_cx || ''}
-                            onChange={(e) => onChangePeriod(idx, 'indoor_cx', parseInt(e.target.value, 10) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            value={period.sold_fair_leads || ''}
+                            onChange={(e) => onChangePeriod(idx, 'sold_fair_leads', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-slate-600 block">Meeting Hrs</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Sold FB</label>
                           <input
                             type="number"
-                            step="0.5"
+                            min="0"
                             disabled={disabled}
-                            value={period.meeting_hours || ''}
-                            onChange={(e) => onChangePeriod(idx, 'meeting_hours', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs text-center"
+                            value={period.sold_fb_leads || ''}
+                            onChange={(e) => onChangePeriod(idx, 'sold_fb_leads', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-1">Sold Other</label>
+                          <input
+                            type="number"
+                            min="0"
+                            disabled={disabled}
+                            value={period.sold_other_leads || ''}
+                            onChange={(e) => onChangePeriod(idx, 'sold_other_leads', parseInt(e.target.value, 10) || 0)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center"
                           />
                         </div>
                       </div>

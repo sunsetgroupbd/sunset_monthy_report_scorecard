@@ -57,6 +57,9 @@ class ManualScorecard(Base):
     month = Column(Date, nullable=False)  # stored as YYYY-MM-01
     status = Column(String(20), nullable=False, default="DRAFT", index=True)  # DRAFT, SUBMITTED, APPROVED, CLOSED
 
+    # Target (BDT)
+    target = Column(Numeric(15, 2), nullable=False, default=0.0)
+
     # Attendance
     planned_leave = Column(Numeric(5, 2), nullable=False, default=0.0)
     unauthorized_leave = Column(Numeric(5, 2), nullable=False, default=0.0)
@@ -158,6 +161,11 @@ class ManualScorecardCustomer(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     scorecard_id = Column(String(36), ForeignKey("manual_scorecards.id", ondelete="CASCADE"), nullable=False, index=True)
     customer_name = Column(String(255), nullable=False)
+    cx_type = Column(String(50), nullable=False, default="New Sales")  # New Sales, TB, EMI
+    payment_type = Column(String(50), nullable=False, default="Paid")  # Payable Amount, Paid
+    amount = Column(Numeric(15, 2), nullable=False, default=0.0)
+    payment_date = Column(Date, nullable=True)
+    payment_status = Column(String(50), nullable=False, default="Paid")  # Paid, Pending
     paid_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     unpaid_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     collection_date = Column(Date, nullable=True)
@@ -170,7 +178,7 @@ class ManualScorecardCustomer(Base):
     tb_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     emi_amount = Column(Numeric(15, 2), nullable=False, default=0.0)
     total_collection = Column(Numeric(15, 2), nullable=False, default=0.0)
-    lead_status = Column(String(20), nullable=False, default="HP")  # HP, P, FUP, NI
+    lead_status = Column(String(50), nullable=False, default="HP")  # HP, P, Fup, Cancel, Hold, Next Month, Next Year, NR
     collection_probability = Column(Integer, nullable=False, default=50)  # 10 to 100
     remarks = Column(Text, nullable=True)
 

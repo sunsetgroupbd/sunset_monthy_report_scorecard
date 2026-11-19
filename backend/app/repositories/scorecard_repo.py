@@ -116,6 +116,7 @@ class ScorecardRepository:
                 db.flush()
 
             # Update Attendance & Forecast
+            scorecard.target = data.target
             scorecard.planned_leave = data.planned_leave
             scorecard.unauthorized_leave = data.unauthorized_leave
             scorecard.working_days = data.working_days
@@ -234,6 +235,11 @@ class ScorecardRepository:
                     cust_obj = existing_cust_map[cust_in.id]
                     seen_cust_ids.add(cust_in.id)
                     cust_obj.customer_name = cust_in.customer_name
+                    cust_obj.cx_type = cust_in.cx_type or "New Sales"
+                    cust_obj.payment_type = cust_in.payment_type or "Paid"
+                    cust_obj.amount = cust_in.amount or Decimal("0.00")
+                    cust_obj.payment_date = cust_in.payment_date
+                    cust_obj.payment_status = cust_in.payment_status or ("Paid" if (cust_in.paid_amount or 0) > 0 else "Pending")
                     cust_obj.paid_amount = cust_in.paid_amount
                     cust_obj.unpaid_amount = cust_in.unpaid_amount
                     cust_obj.collection_date = cust_in.collection_date
@@ -257,6 +263,11 @@ class ScorecardRepository:
                         id=new_cust_id,
                         scorecard_id=scorecard.id,
                         customer_name=cust_in.customer_name,
+                        cx_type=cust_in.cx_type or "New Sales",
+                        payment_type=cust_in.payment_type or "Paid",
+                        amount=cust_in.amount or Decimal("0.00"),
+                        payment_date=cust_in.payment_date,
+                        payment_status=cust_in.payment_status or ("Paid" if (cust_in.paid_amount or 0) > 0 else "Pending"),
                         paid_amount=cust_in.paid_amount,
                         unpaid_amount=cust_in.unpaid_amount,
                         collection_date=cust_in.collection_date,
@@ -399,6 +410,11 @@ class ScorecardRepository:
             CustomerItem(
                 id=c.id,
                 customer_name=c.customer_name,
+                cx_type=getattr(c, 'cx_type', 'New Sales') or 'New Sales',
+                payment_type=getattr(c, 'payment_type', 'Paid') or 'Paid',
+                amount=getattr(c, 'amount', Decimal("0.00")) or Decimal("0.00"),
+                payment_date=getattr(c, 'payment_date', None),
+                payment_status=getattr(c, 'payment_status', 'Paid') or ('Paid' if (c.paid_amount or 0) > 0 else 'Pending'),
                 paid_amount=c.paid_amount,
                 unpaid_amount=c.unpaid_amount,
                 collection_date=c.collection_date,
@@ -481,6 +497,7 @@ class ScorecardRepository:
             employee_id=scorecard.employee_id,
             month=scorecard.month,
             status=scorecard.status,
+            target=getattr(scorecard, 'target', Decimal("0.00")) or Decimal("0.00"),
             planned_leave=scorecard.planned_leave,
             unauthorized_leave=scorecard.unauthorized_leave,
             working_days=scorecard.working_days,

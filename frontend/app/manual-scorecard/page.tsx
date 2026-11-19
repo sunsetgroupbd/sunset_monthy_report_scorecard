@@ -139,6 +139,11 @@ function ManualScorecardContent() {
     if (!scorecard) return;
     const newCustomer: CustomerItem = customCustomer || {
       customer_name: '',
+      cx_type: 'New Sales',
+      payment_type: 'Paid',
+      amount: 0,
+      payment_date: '',
+      payment_status: 'Paid',
       paid_amount: 0,
       unpaid_amount: 0,
       in_out_plan: 'In Plan',
@@ -168,9 +173,10 @@ function ManualScorecardContent() {
       const payload = {
         employee_id: selectedEmployeeId,
         month: selectedMonth.length === 7 ? `${selectedMonth}-01` : selectedMonth,
+        target: scorecard.target || 0,
         planned_leave: scorecard.planned_leave,
         unauthorized_leave: scorecard.unauthorized_leave,
-        working_days: scorecard.working_days,
+        working_days: 0,
         prediction_amount: scorecard.prediction_amount,
         sheet_score: scorecard.sheet_score,
         call_score: scorecard.call_score,
@@ -286,9 +292,9 @@ function ManualScorecardContent() {
       />
 
       <AttendanceForecastCard
+        target={scorecard.target || 0}
         plannedLeave={scorecard.planned_leave}
         unauthorizedLeave={scorecard.unauthorized_leave}
-        workingDays={scorecard.working_days}
         predictionAmount={scorecard.prediction_amount}
         onChange={handleAttendanceForecastChange}
         disabled={isEditingDisabled}
