@@ -355,7 +355,7 @@ function ScorecardPrintContent() {
         {targetPeriod && (
           <div className={`grid grid-cols-18 border-b border-black text-center bg-amber-50/50 font-bold ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
             <div className="p-0.5 border-r border-black flex items-center justify-center font-extrabold bg-amber-100/60">
-              TG (Target)
+              TG
             </div>
             {/* TG column value in TG Row */}
             <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">

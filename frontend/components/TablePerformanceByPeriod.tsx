@@ -26,7 +26,7 @@ interface PerformanceByPeriodProps {
 }
 
 const PERIOD_LABELS: Record<number, { title: string; subtitle: string }> = {
-  0: { title: 'TG (Target)', subtitle: 'Monthly Benchmark' },
+  0: { title: 'TG', subtitle: 'Monthly Benchmark' },
   1: { title: 'Till 5th', subtitle: 'Day 1–5' },
   2: { title: 'Till 10th', subtitle: 'Day 6–10' },
   3: { title: 'Till 15th', subtitle: 'Day 11–15' },
@@ -238,7 +238,7 @@ export default function TablePerformanceByPeriod({
                   <td className="py-2.5 px-3 sticky left-0 z-10 bg-amber-50 font-bold text-amber-900 border-r border-amber-200">
                     <div className="flex items-center space-x-1.5">
                       <Target className="w-3.5 h-3.5 text-amber-600" />
-                      <span>TG (Target)</span>
+                      <span>TG</span>
                     </div>
                     <div className="text-[10px] text-amber-700 font-normal">Monthly Benchmark</div>
                   </td>
