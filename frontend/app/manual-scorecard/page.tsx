@@ -292,6 +292,7 @@ function ManualScorecardContent() {
       />
 
       <AttendanceForecastCard
+        target={scorecard.target || 0}
         plannedLeave={scorecard.planned_leave}
         unauthorizedLeave={scorecard.unauthorized_leave}
         predictionAmount={scorecard.prediction_amount}
