@@ -10,7 +10,8 @@ from app.models.models import Profile, ManualScorecard
 from app.schemas.scorecard import (
     ScorecardUpsertRequest,
     ScorecardStatusUpdateRequest,
-    ScorecardResponse
+    ScorecardResponse,
+    ScorecardSubmissionsResponse
 )
 from app.schemas.profile import SubordinateResponse, ProfileResponse
 from app.repositories.scorecard_repo import ScorecardRepository
@@ -203,3 +204,23 @@ def get_available_months(
 
     all_months = sorted(list(existing.union(set(rolling))), reverse=True)
     return all_months
+
+
+@router.get("/submissions", response_model=ScorecardSubmissionsResponse)
+def get_scorecard_submissions(
+    month: Optional[str] = Query(None, description="Month in YYYY-MM format or 'all'"),
+    status: Optional[str] = Query(None, description="Scorecard status filter (e.g. SUBMITTED, APPROVED, CLOSED, ALL)"),
+    current_user: Profile = Depends(require_role(["ADMIN", "TL", "CO"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all scorecard submissions for supervisor / admin review.
+    Returns pending submissions count and list of employee submissions.
+    """
+    pending_count = ScorecardRepository.get_pending_submissions_count(db, current_user)
+    submissions = ScorecardRepository.get_submissions(db, current_user, month=month, status_filter=status)
+    return {
+        "pending_count": pending_count,
+        "submissions": submissions
+    }
+

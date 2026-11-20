@@ -1,4 +1,4 @@
-import { ScorecardResponse, Subordinate, Profile, Team } from '@/types/scorecard';
+import { ScorecardResponse, Subordinate, Profile, Team, ScorecardSubmissionsResponse } from '@/types/scorecard';
 import { supabase } from '@/lib/supabase/client';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/+$/, '');
@@ -111,6 +111,29 @@ export async function fetchMonths(): Promise<string[]> {
   }
   return res.json();
 }
+
+export async function fetchScorecardSubmissions(
+  month?: string,
+  status?: string
+): Promise<ScorecardSubmissionsResponse> {
+  const headers = await getAuthHeader();
+  const params = new URLSearchParams();
+  if (month) params.append('month', month);
+  if (status) params.append('status', status);
+
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const res = await fetch(`${API_BASE_URL}/manual-scorecard/submissions${qs}`, {
+    headers,
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to fetch scorecard submissions');
+  }
+  return res.json();
+}
+
 
 export async function fetchCurrentUserProfile(): Promise<Profile> {
   const headers = await getAuthHeader();

@@ -198,3 +198,31 @@ class ScorecardResponse(BaseModel):
     can_reopen: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ScorecardSubmissionItem(BaseModel):
+    id: str
+    employee_id: str
+    employee_name: str
+    employee_code: str
+    designation: str
+    team_name: Optional[str] = None
+    month: str  # YYYY-MM
+    status: str
+    submitted_at: Optional[datetime] = None
+    submitted_by_name: Optional[str] = None
+    target: Decimal = Field(default=Decimal("0.00"))
+    prediction_amount: Decimal = Field(default=Decimal("0.00"))
+    marking: Optional[Decimal] = None
+    sheet_score: Optional[Decimal] = None
+    call_score: Optional[Decimal] = None
+    total_achieved_collection: Decimal = Field(default=Decimal("0.00"))
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ScorecardSubmissionsResponse(BaseModel):
+    pending_count: int
+    submissions: List[ScorecardSubmissionItem]
+

@@ -181,3 +181,29 @@ export interface ScorecardResponse {
   can_close: boolean;
   can_reopen: boolean;
 }
+
+export interface ScorecardSubmissionItem {
+  id: string;
+  employee_id: string;
+  employee_name: string;
+  employee_code: string;
+  designation: string;
+  team_name?: string | null;
+  month: string;
+  status: ScorecardStatus;
+  submitted_at?: string | null;
+  submitted_by_name?: string | null;
+  target: number;
+  prediction_amount: number;
+  marking?: number | null;
+  sheet_score?: number | null;
+  call_score?: number | null;
+  total_achieved_collection: number;
+  updated_at?: string | null;
+}
+
+export interface ScorecardSubmissionsResponse {
+  pending_count: number;
+  submissions: ScorecardSubmissionItem[];
+}
+

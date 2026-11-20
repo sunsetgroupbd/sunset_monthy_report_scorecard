@@ -8,7 +8,8 @@ import {
   upsertScorecard, 
   updateScorecardStatus, 
   fetchSubordinates, 
-  fetchMonths 
+  fetchMonths,
+  fetchScorecardSubmissions
 } from '@/lib/api/scorecard';
 import { 
   ScorecardResponse, 
@@ -24,7 +25,8 @@ import PortfolioSnapshotCard from '@/components/PortfolioSnapshotCard';
 import TablePerformanceByPeriod from '@/components/TablePerformanceByPeriod';
 import TableCustomerCollectionPlan from '@/components/TableCustomerCollectionPlan';
 import AuditTrailModal from '@/components/AuditTrailModal';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import ScorecardSubmissionsModal from '@/components/ScorecardSubmissionsModal';
+import { AlertCircle, CheckCircle2, Bell, FileCheck2 } from 'lucide-react';
 
 function ManualScorecardContent() {
   const searchParams = useSearchParams();
@@ -42,6 +44,19 @@ function ManualScorecardContent() {
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showAuditModal, setShowAuditModal] = useState<boolean>(false);
+  const [showSubmissionsModal, setShowSubmissionsModal] = useState<boolean>(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
+  const isSupervisorOrAdmin = profile && ['ADMIN', 'TL', 'CO'].includes(profile.role);
+
+  const refreshPendingCount = useCallback(async () => {
+    if (profile && ['ADMIN', 'TL', 'CO'].includes(profile.role)) {
+      try {
+        const res = await fetchScorecardSubmissions('all', 'SUBMITTED');
+        setPendingCount(res.pending_count || 0);
+      } catch {}
+    }
+  }, [profile]);
 
   useEffect(() => {
     async function initSelectors() {
@@ -69,8 +84,9 @@ function ManualScorecardContent() {
 
     if (profile) {
       initSelectors();
+      refreshPendingCount();
     }
-  }, [profile, searchParams]);
+  }, [profile, searchParams, refreshPendingCount]);
 
   const loadScorecard = useCallback(async (empId: string, month: string) => {
     if (!empId || !month) return;
@@ -218,11 +234,22 @@ function ManualScorecardContent() {
       const res = await updateScorecardStatus(scorecard.id, newStatus);
       setScorecard(res);
       setFeedback({ type: 'success', message: `Scorecard transitioned to ${newStatus}.` });
+      refreshPendingCount();
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Status transition failed.' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSelectSubmission = (empId: string, month: string) => {
+    setSelectedEmployeeId(empId);
+    setSelectedMonth(month);
+    router.push(`/manual-scorecard?employee_id=${empId}&month=${month}`);
+    setShowSubmissionsModal(false);
+    setTimeout(() => {
+      document.getElementById('supervisor-evaluation-card')?.scrollIntoView({ behavior: 'smooth' });
+    }, 450);
   };
 
   if (loading && !scorecard) {
@@ -265,6 +292,32 @@ function ManualScorecardContent() {
           </div>
           <button onClick={() => setFeedback(null)} className="text-xs opacity-70 hover:opacity-100">
             Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Superadmin / Supervisor Notification Banner for Submitted Scorecards */}
+      {isSupervisorOrAdmin && pendingCount > 0 && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-indigo-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+              <Bell className="w-5 h-5 text-white animate-bounce" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold leading-tight">
+                {pendingCount} Employee Scorecard{pendingCount > 1 ? 's' : ''} Submitted & Pending Review
+              </h4>
+              <p className="text-xs text-amber-100 mt-0.5">
+                Team members have submitted their monthly scorecards. Review collections, enter sheet & call scores, and finalize marking.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSubmissionsModal(true)}
+            className="px-4 py-2 bg-white text-indigo-700 hover:bg-slate-100 rounded-xl text-xs font-bold shadow-sm transition shrink-0 flex items-center space-x-1.5 self-start sm:self-auto"
+          >
+            <FileCheck2 className="w-4 h-4" />
+            <span>Review Submissions ({pendingCount})</span>
           </button>
         </div>
       )}
@@ -336,6 +389,16 @@ function ManualScorecardContent() {
         onChange={handleSupervisorEvaluationChange}
         canEditSupervisorFields={scorecard.can_edit_supervisor_fields}
         disabled={isClosed}
+      />
+
+      <ScorecardSubmissionsModal
+        isOpen={showSubmissionsModal}
+        onClose={() => {
+          setShowSubmissionsModal(false);
+          refreshPendingCount();
+        }}
+        onSelectSubmission={handleSelectSubmission}
+        currentMonth={selectedMonth}
       />
 
       <AuditTrailModal

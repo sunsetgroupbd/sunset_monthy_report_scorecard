@@ -537,3 +537,101 @@ class ScorecardRepository:
             can_close=can_close,
             can_reopen=can_reopen
         )
+
+    @staticmethod
+    def get_pending_submissions_count(db: Session, current_user: Profile) -> int:
+        query = db.query(ManualScorecard).join(
+            Profile, ManualScorecard.employee_id == Profile.id
+        ).filter(
+            ManualScorecard.status == "SUBMITTED"
+        )
+        if current_user.role != "ADMIN":
+            if current_user.team_id:
+                query = query.filter(
+                    or_(
+                        Profile.supervisor_id == current_user.id,
+                        Profile.team_id == current_user.team_id
+                    )
+                )
+            else:
+                query = query.filter(Profile.supervisor_id == current_user.id)
+        return query.count()
+
+    @staticmethod
+    def get_submissions(
+        db: Session,
+        current_user: Profile,
+        month: Optional[str] = None,
+        status_filter: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        query = db.query(ManualScorecard).join(
+            Profile, ManualScorecard.employee_id == Profile.id
+        ).options(
+            joinedload(ManualScorecard.employee).joinedload(Profile.team),
+            joinedload(ManualScorecard.periods)
+        )
+
+        if current_user.role != "ADMIN":
+            if current_user.team_id:
+                query = query.filter(
+                    or_(
+                        Profile.supervisor_id == current_user.id,
+                        Profile.team_id == current_user.team_id
+                    )
+                )
+            else:
+                query = query.filter(Profile.supervisor_id == current_user.id)
+
+        if month and month.lower() != "all":
+            try:
+                parts = month.split("-")
+                m_date = date(int(parts[0]), int(parts[1]), 1)
+                query = query.filter(ManualScorecard.month == m_date)
+            except Exception:
+                pass
+
+        if status_filter and status_filter.upper() != "ALL":
+            query = query.filter(ManualScorecard.status == status_filter.upper())
+
+        scorecards = query.order_by(
+            desc(ManualScorecard.submitted_at),
+            desc(ManualScorecard.updated_at)
+        ).all()
+
+        results = []
+        for sc in scorecards:
+            emp = sc.employee
+            emp_name = emp.full_name if emp else "Unknown"
+            emp_code = emp.employee_id if emp else ""
+            desig = emp.designation if emp else ""
+            team = emp.team.name if emp and emp.team else None
+            m_str = sc.month.strftime("%Y-%m") if sc.month else ""
+
+            # Calculate total achieved collection from periods 1-6
+            tot_col = Decimal("0.00")
+            for p in sc.periods:
+                if 1 <= p.period_index <= 6:
+                    tot_col += (p.new_sales or Decimal("0.00")) + (p.tb_amount or Decimal("0.00")) + (p.emi_amount or Decimal("0.00"))
+
+            results.append({
+                "id": sc.id,
+                "employee_id": sc.employee_id,
+                "employee_name": emp_name,
+                "employee_code": emp_code,
+                "designation": desig,
+                "team_name": team,
+                "month": m_str,
+                "status": sc.status,
+                "submitted_at": sc.submitted_at,
+                "submitted_by_name": emp_name,
+                "target": getattr(sc, 'target', Decimal("0.00")) or Decimal("0.00"),
+                "prediction_amount": sc.prediction_amount or Decimal("0.00"),
+                "marking": sc.marking,
+                "sheet_score": sc.sheet_score,
+                "call_score": sc.call_score,
+                "total_achieved_collection": tot_col,
+                "updated_at": sc.updated_at
+            })
+
+        return results
+

@@ -25,7 +25,7 @@ export default function SupervisorEvaluationCard({
   const isReadOnly = !canEditSupervisorFields || disabled;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+    <div id="supervisor-evaluation-card" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6 scroll-mt-20">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
         <div className="flex items-center space-x-2">
           <Award className="w-5 h-5 text-purple-600" />
