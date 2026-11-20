@@ -227,7 +227,7 @@ function ScorecardPrintContent() {
             Position
           </div>
           <div className="col-span-2 p-0.5 border-r border-black flex items-center justify-center font-semibold truncate px-1">
-            {employee?.designation || 'Administrator'}
+            {employee?.designation || '—'}
           </div>
           <div className="col-span-2 p-0.5 border-r border-black flex flex-col justify-center items-center bg-slate-50 leading-tight">
             <span className="text-[0.85em]">Marking (Out of 100)</span>

@@ -24,32 +24,73 @@ async def get_current_user(
         # Check by email as a fallback if IDs haven't synced
         profile = db.query(Profile).filter(Profile.email == email).first()
 
-    # If profile still does not exist, auto-provision profile for valid authenticated Supabase user
+    raw_meta = token_data.get("payload", {}).get("user_metadata", {}) or {}
+    meta_role = raw_meta.get("role")
+    meta_designation = raw_meta.get("designation")
+    meta_fullname = raw_meta.get("full_name")
+    meta_empid = raw_meta.get("employee_id")
+
+    # If profile exists, sync designation, full name, employee_id, and role with Supabase user_metadata
+    if profile:
+        changed = False
+        if meta_designation and profile.designation != meta_designation:
+            profile.designation = meta_designation
+            changed = True
+        if meta_fullname and profile.full_name != meta_fullname:
+            profile.full_name = meta_fullname
+            changed = True
+        if meta_empid and profile.employee_id != meta_empid:
+            existing_emp = db.query(Profile).filter(Profile.employee_id == meta_empid, Profile.id != profile.id).first()
+            if not existing_emp:
+                profile.employee_id = meta_empid
+                changed = True
+        
+        # Only true superadmins get ADMIN role
+        if email and email.lower() in ("admin@scorecard.com", "sunsetgroupbd@gmail.com"):
+            target_role = "ADMIN"
+        elif meta_role in ("ADMIN", "TL", "CO", "EMPLOYEE"):
+            target_role = meta_role
+        else:
+            target_role = profile.role or "EMPLOYEE"
+
+        if profile.role != target_role:
+            profile.role = target_role
+            changed = True
+
+        if changed:
+            try:
+                db.commit()
+                db.refresh(profile)
+            except Exception:
+                db.rollback()
+
+    # If profile still does not exist, auto-provision profile using metadata
     if not profile and email:
         try:
             count = db.query(Profile).count()
-            emp_id = str(10000001 + count)
+            emp_id = meta_empid or str(10000001 + count)
             while db.query(Profile).filter(Profile.employee_id == emp_id).first():
                 count += 1
                 emp_id = str(10000001 + count)
 
-            # Auto-assign ADMIN if email is sunset/admin or if no admin exists
-            has_admin = db.query(Profile).filter(Profile.role == "ADMIN").first()
-            is_admin_user = not has_admin or "admin" in email.lower() or "sunset" in email.lower()
-            role = "ADMIN" if is_admin_user else "EMPLOYEE"
+            if email.lower() in ("admin@scorecard.com", "sunsetgroupbd@gmail.com"):
+                role = "ADMIN"
+            elif meta_role in ("ADMIN", "TL", "CO", "EMPLOYEE"):
+                role = meta_role
+            else:
+                role = "EMPLOYEE"
 
             first_team = db.query(Team).first()
             team_id = first_team.id if first_team else None
-
-            raw_meta = token_data.get("payload", {}).get("user_metadata", {})
-            full_name = raw_meta.get("full_name") or email.split("@")[0].replace(".", " ").title()
+            full_name = meta_fullname or email.split("@")[0].replace(".", " ").title()
+            designation = meta_designation or ("Administrator" if role == "ADMIN" else "Relationship Officer")
 
             profile = Profile(
                 id=user_id,
                 employee_id=emp_id,
                 full_name=full_name,
                 email=email,
-                designation="Administrator" if role == "ADMIN" else "Relationship Officer",
+                designation=designation,
                 team_id=team_id,
                 joining_date=date.today(),
                 role=role,

@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from app.schemas.profile import ProfileResponse
 
 
@@ -46,7 +46,7 @@ class PeriodItem(PeriodMetrics):
 
 class CustomerItem(BaseModel):
     id: Optional[str] = None
-    customer_name: str = Field(..., min_length=1, max_length=255)
+    customer_name: Optional[str] = Field(default="", max_length=255)
     cx_type: Optional[str] = Field(default="New Sales", description="New Sales, TB, EMI")
     payment_type: Optional[str] = Field(default="Paid", description="Payable Amount, Paid")
     amount: Decimal = Field(default=Decimal("0.00"), ge=0)
@@ -67,6 +67,21 @@ class CustomerItem(BaseModel):
     lead_status: str = Field(default="HP", description="HP, P, Fup, Cancel, Hold, Next Month, Next Year, NR")
     collection_probability: int = Field(default=50, ge=10, le=100)
     remarks: Optional[str] = None
+
+    @field_validator(
+        "payment_date",
+        "collection_date",
+        "next_collection_date",
+        "next_collection_date_2",
+        "date_1",
+        "date_2",
+        mode="before"
+    )
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if v == "" or (isinstance(v, str) and not v.strip()):
+            return None
+        return v
 
     model_config = ConfigDict(from_attributes=True)
 

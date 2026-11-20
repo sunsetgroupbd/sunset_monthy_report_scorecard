@@ -23,6 +23,24 @@ async function getAuthHeader(): Promise<HeadersInit> {
   };
 }
 
+function formatErrorDetail(detail: any): string {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map(err => {
+        if (typeof err === 'string') return err;
+        const field = err.loc ? err.loc.slice(1).join('.') : '';
+        return field ? `${field}: ${err.msg}` : (err.msg || JSON.stringify(err));
+      })
+      .join('; ');
+  }
+  if (typeof detail === 'object') {
+    return detail.message || JSON.stringify(detail);
+  }
+  return String(detail);
+}
+
 export async function fetchScorecard(employeeId: string, month: string): Promise<ScorecardResponse> {
   const headers = await getAuthHeader();
   const res = await fetch(`${API_BASE_URL}/manual-scorecard?employee_id=${encodeURIComponent(employeeId)}&month=${encodeURIComponent(month)}`, {
@@ -32,7 +50,7 @@ export async function fetchScorecard(employeeId: string, month: string): Promise
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Failed to fetch scorecard (${res.status})`);
+    throw new Error(formatErrorDetail(errorData.detail) || `Failed to fetch scorecard (${res.status})`);
   }
   return res.json();
 }
@@ -47,7 +65,7 @@ export async function upsertScorecard(payload: any): Promise<ScorecardResponse> 
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Failed to save scorecard (${res.status})`);
+    throw new Error(formatErrorDetail(errorData.detail) || `Failed to save scorecard (${res.status})`);
   }
   return res.json();
 }
@@ -66,7 +84,7 @@ export async function updateScorecardStatus(
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Failed to update status (${res.status})`);
+    throw new Error(formatErrorDetail(errorData.detail) || `Failed to update status (${res.status})`);
   }
   return res.json();
 }

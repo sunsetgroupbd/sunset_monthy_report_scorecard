@@ -186,6 +186,20 @@ function ManualScorecardContent() {
     setFeedback(null);
 
     try {
+      // Sanitize customer records: convert empty string dates to null
+      const sanitizedCustomers = (scorecard.customers || [])
+        .filter(c => (c.customer_name && c.customer_name.trim().length > 0) || (c.amount && c.amount > 0) || (c.paid_amount && c.paid_amount > 0) || (c.total_collection && c.total_collection > 0))
+        .map(c => ({
+          ...c,
+          customer_name: c.customer_name?.trim() || 'Customer',
+          payment_date: c.payment_date && String(c.payment_date).trim() ? c.payment_date : null,
+          collection_date: c.collection_date && String(c.collection_date).trim() ? c.collection_date : null,
+          next_collection_date: c.next_collection_date && String(c.next_collection_date).trim() ? c.next_collection_date : null,
+          next_collection_date_2: c.next_collection_date_2 && String(c.next_collection_date_2).trim() ? c.next_collection_date_2 : null,
+          date_1: c.date_1 && String(c.date_1).trim() ? c.date_1 : null,
+          date_2: c.date_2 && String(c.date_2).trim() ? c.date_2 : null,
+        }));
+
       const payload = {
         employee_id: selectedEmployeeId,
         month: selectedMonth.length === 7 ? `${selectedMonth}-01` : selectedMonth,
@@ -208,7 +222,7 @@ function ManualScorecardContent() {
         tb_hold_count: scorecard.tb_hold_count,
         tb_cancel_count: scorecard.tb_cancel_count,
         periods: scorecard.periods,
-        customers: scorecard.customers
+        customers: sanitizedCustomers
       };
 
       const res = await upsertScorecard(payload);
