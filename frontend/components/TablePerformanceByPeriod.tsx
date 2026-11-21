@@ -210,13 +210,13 @@ export default function TablePerformanceByPeriod({
                 <th className="py-2 px-2.5 min-w-[125px] border-r border-slate-200 bg-emerald-50/40 text-emerald-950 font-bold">
                   Total Collection
                 </th>
-                {/* Leads (Total Lead added between EMI/Total Collection and Current Fair Lead) */}
-                <th className="py-2 px-2 text-center min-w-[65px] font-bold text-indigo-900 bg-indigo-50/50">Total Lead</th>
+                {/* Leads (Total Lead after Fup) */}
                 <th className="py-2 px-2 text-center min-w-[60px]">Current Fair Lead</th>
                 <th className="py-2 px-2 text-center min-w-[60px]">Current FB Leads</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-emerald-700">HP</th>
                 <th className="py-2 px-2 text-center min-w-[50px] font-bold text-blue-700">P</th>
-                <th className="py-2 px-2 text-center min-w-[50px] border-r border-slate-200 font-bold text-amber-700">Fup</th>
+                <th className="py-2 px-2 text-center min-w-[50px] font-bold text-amber-700">Fup</th>
+                <th className="py-2 px-2 text-center min-w-[65px] font-bold text-indigo-900 bg-indigo-50/50 border-r border-slate-200">Total Lead</th>
                 {/* Activities (Connected removed) */}
                 <th className="py-2 px-2 text-center min-w-[65px]">Calls Dialed</th>
                 <th className="py-2 px-2 text-center min-w-[50px]">Hold</th>
