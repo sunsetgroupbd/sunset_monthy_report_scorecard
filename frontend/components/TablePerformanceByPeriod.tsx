@@ -318,11 +318,6 @@ export default function TablePerformanceByPeriod({
                       )}
                     </td>
 
-                    {/* Total Lead added between EMI/Total Collection and Current Fair Lead */}
-                    <td className="py-2 px-1 text-center font-bold text-slate-800 bg-slate-50 font-mono">
-                      {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
-                    </td>
-
                     {/* Leads Fields */}
                     <td className="py-1 px-1">
                       <input
@@ -364,7 +359,7 @@ export default function TablePerformanceByPeriod({
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center text-blue-700 font-bold focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
                     </td>
-                    <td className="py-1 px-1 border-r border-slate-200">
+                    <td className="py-1 px-1">
                       <input
                         type="number"
                         min="0"
@@ -373,6 +368,11 @@ export default function TablePerformanceByPeriod({
                         onChange={(e) => onChangePeriod(idx, 'fup', parseInt(e.target.value, 10) || 0)}
                         className="w-full bg-white border border-slate-200 rounded px-1 py-1 text-xs text-center text-amber-700 font-bold focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50"
                       />
+                    </td>
+
+                    {/* Total Lead after Fup */}
+                    <td className="py-2 px-1 text-center font-bold text-slate-800 bg-slate-50 font-mono border-r border-slate-200">
+                      {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
                     </td>
 
                     {/* Activity Fields */}
