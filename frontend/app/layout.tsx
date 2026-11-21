@@ -4,8 +4,16 @@ import { AuthProvider } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: 'Manual Monthly Scorecard Management System',
+  title: 'Monthly Scorecard Portal | Sunset Group',
   description: 'Enterprise Performance, Collection Forecasting, and Portfolio Snapshot Management',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    shortcut: '/icon.png',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
