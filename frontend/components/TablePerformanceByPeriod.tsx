@@ -75,27 +75,27 @@ export default function TablePerformanceByPeriod({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm shadow-slate-200/50 p-6 sm:p-7 mb-6 transition-all">
       {/* Table Header and View Mode Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-4 border-b border-slate-100 gap-3">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 mb-5 border-b border-slate-100 gap-3">
+        <div className="flex items-center space-x-2.5">
           <Table className="w-5 h-5 text-emerald-600" />
           <div>
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
               Table 1: Monthly Performance & Activity Tracking
             </h2>
-            <p className="text-xs text-slate-500">
-              Checkpoint performance metrics (Till 5th to Till 30/31st) and Achieved Totals.
+            <p className="text-xs text-slate-500 font-medium">
+              Checkpoint performance metrics (Till 5th to Till 30/31st) and Achieved Totals
             </p>
           </div>
         </div>
 
         {/* View Toggle (Table / Card Mode for Mobile) */}
-        <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+        <div className="flex items-center space-x-1.5 bg-slate-100/90 p-1 rounded-2xl self-start sm:self-auto border border-slate-200/60 shadow-2xs">
           <button
             onClick={() => setViewMode('table')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              viewMode === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Table className="w-3.5 h-3.5" />
@@ -103,8 +103,8 @@ export default function TablePerformanceByPeriod({
           </button>
           <button
             onClick={() => setViewMode('cards')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              viewMode === 'cards' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <LayoutList className="w-3.5 h-3.5" />
@@ -179,7 +179,7 @@ export default function TablePerformanceByPeriod({
       {/* 1. TABLE VIEW WITH HORIZONTAL SCROLL & STICKY COLUMN         */}
       {/* ------------------------------------------------------------- */}
       {viewMode === 'table' ? (
-        <div className="overflow-x-auto relative border border-slate-200 rounded-xl shadow-xs">
+        <div className="overflow-x-auto relative border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               {/* Category Grouping Headers */}

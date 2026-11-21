@@ -76,42 +76,43 @@ export default function ScorecardHeader({
 }: ScorecardHeaderProps) {
   const employee = scorecard.employee;
 
-  const statusBadgeStyle: Record<ScorecardStatus, { bg: string; text: string; border: string; label: string }> = {
-    DRAFT: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200', label: 'DRAFT' },
-    SUBMITTED: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200', label: 'SUBMITTED' },
-    APPROVED: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200', label: 'APPROVED' },
-    CLOSED: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200', label: 'CLOSED / LOCKED' },
+  const statusBadgeStyle: Record<ScorecardStatus, { bg: string; text: string; border: string; dot: string; label: string }> = {
+    DRAFT: { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200', dot: 'bg-amber-500', label: 'DRAFT' },
+    SUBMITTED: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200', dot: 'bg-blue-500', label: 'SUBMITTED' },
+    APPROVED: { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200', dot: 'bg-emerald-500', label: 'APPROVED' },
+    CLOSED: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200', dot: 'bg-purple-500', label: 'CLOSED / LOCKED' },
   };
 
   const statusStyle = statusBadgeStyle[scorecard.status] || statusBadgeStyle.DRAFT;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm shadow-slate-200/50 p-6 sm:p-7 mb-6 transition-all">
       {/* Top Bar: Title & Selectors */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-100">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               Manual Monthly Scorecard
             </h1>
-            <span className={`px-3 py-1 text-xs font-bold rounded-full border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+            <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full border shadow-2xs ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+              <span className={`w-2 h-2 rounded-full ${statusStyle.dot} mr-1.5 animate-pulse`}></span>
               {statusStyle.label}
             </span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Manual performance tracking, customer collection forecasting, and portfolio metrics.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            Performance tracking, customer collection forecasting, and activity metrics.
           </p>
         </div>
 
         {/* Selectors and Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Month Selector */}
-          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500">
-            <Calendar className="w-4 h-4 text-slate-500 mr-2" />
+          <div className="flex items-center bg-slate-50/80 hover:bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 transition shadow-xs focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
+            <Calendar className="w-4 h-4 text-emerald-600 mr-2 shrink-0" />
             <select
               value={selectedMonth}
               onChange={(e) => onMonthChange(e.target.value)}
-              className="bg-transparent text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               {availableMonths.map((m) => (
                 <option key={m} value={m}>
@@ -123,12 +124,12 @@ export default function ScorecardHeader({
 
           {/* Employee Selector (if multiple subordinates available) */}
           {subordinates.length > 1 && (
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500">
-              <User className="w-4 h-4 text-slate-500 mr-2" />
+            <div className="flex items-center bg-slate-50/80 hover:bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 transition shadow-xs focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500">
+              <User className="w-4 h-4 text-emerald-600 mr-2 shrink-0" />
               <select
                 value={selectedEmployeeId}
                 onChange={(e) => onEmployeeChange(e.target.value)}
-                className="bg-transparent text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer max-w-[220px] truncate"
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer max-w-[200px] truncate"
               >
                 {subordinates.map((sub) => (
                   <option key={sub.id} value={sub.id}>
@@ -143,9 +144,9 @@ export default function ScorecardHeader({
           <button
             onClick={onOpenAuditLogs}
             title="View Audit Trail"
-            className="flex items-center space-x-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+            className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-slate-600 bg-slate-100/80 hover:bg-slate-200/70 border border-slate-200/80 rounded-2xl transition shadow-xs cursor-pointer"
           >
-            <History className="w-4 h-4" />
+            <History className="w-4 h-4 text-slate-500" />
             <span className="hidden sm:inline">Audit Trail</span>
           </button>
 
@@ -153,37 +154,37 @@ export default function ScorecardHeader({
           <Link
             href={`/manual-scorecard/print?employee_id=${selectedEmployeeId}&month=${selectedMonth}`}
             target="_blank"
-            className="flex items-center space-x-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+            className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100/80 hover:bg-slate-200/70 border border-slate-200/80 rounded-2xl transition shadow-xs"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-4 h-4 text-slate-600" />
             <span className="hidden sm:inline">Print / PDF</span>
           </Link>
         </div>
       </div>
 
       {/* Employee Profile Information Strip */}
-      <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Employee Name</span>
-          <span className="text-sm font-semibold text-slate-800 truncate block mt-0.5">
+      <div className="pt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-slate-50/60 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Employee Name</span>
+          <span className="text-xs sm:text-sm font-bold text-slate-900 truncate block mt-0.5">
             {employee?.full_name || '—'}
           </span>
         </div>
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Employee ID</span>
-          <span className="text-sm font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
+        <div className="bg-slate-50/60 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Employee ID</span>
+          <span className="text-xs sm:text-sm font-mono font-extrabold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-lg inline-block mt-0.5 border border-emerald-200/60">
             {employee?.employee_id || '—'}
           </span>
         </div>
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Designation</span>
-          <span className="text-sm font-medium text-slate-700 truncate block mt-0.5">
+        <div className="bg-slate-50/60 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Designation</span>
+          <span className="text-xs sm:text-sm font-semibold text-slate-700 truncate block mt-0.5">
             {employee?.designation || '—'}
           </span>
         </div>
-        <div>
-          <span className="text-xs font-medium text-slate-400 block uppercase tracking-wider">Role</span>
-          <span className="text-sm font-bold text-slate-800 block mt-0.5">
+        <div className="bg-slate-50/60 p-3 rounded-2xl border border-slate-100">
+          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Role</span>
+          <span className="text-xs sm:text-sm font-black text-slate-800 block mt-0.5">
             {employee?.role || 'EMPLOYEE'}
           </span>
         </div>

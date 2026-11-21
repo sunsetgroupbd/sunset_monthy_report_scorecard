@@ -333,10 +333,10 @@ function ManualScorecardContent() {
   return (
     <div className="space-y-6 pb-12">
       {feedback && (
-        <div className={`p-4 rounded-xl border flex items-center justify-between text-xs font-semibold ${
+        <div className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-semibold shadow-xs animate-in fade-in ${
           feedback.type === 'success' 
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
-            : 'bg-rose-50 border-rose-200 text-rose-900'
+            ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900' 
+            : 'bg-rose-50/90 border-rose-200 text-rose-900'
         }`}>
           <div className="flex items-center space-x-2">
             {feedback.type === 'success' ? (
