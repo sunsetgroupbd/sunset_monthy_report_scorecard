@@ -22,6 +22,15 @@ export function calculatePeriodTotalCollection(period: PeriodItem): number {
   return ns + tb + emi;
 }
 
+export function calculatePeriodTotalLeads(period?: Partial<PeriodItem> | null): number {
+  if (!period) return 0;
+  return Number(period.fair_leads || 0) +
+    Number(period.fb_leads || 0) +
+    Number(period.hp || 0) +
+    Number(period.p || 0) +
+    Number(period.fup || 0);
+}
+
 export function calculateCustomerTotalCollection(customer: CustomerItem): number {
   const ns = Number(customer.new_sales_amount || 0);
   const tb = Number(customer.tb_amount || 0);
@@ -67,7 +76,10 @@ export function calculateTotalAchieved(periods: PeriodItem[]): PeriodMetrics {
     tb_amount,
     emi_amount,
     total_collection,
-    total_leads: weekly.reduce((sum, p) => sum + Number(p.total_leads || 0), 0),
+    total_leads: weekly.reduce((sum, p) => {
+      const sumLeads = calculatePeriodTotalLeads(p);
+      return sum + (sumLeads > 0 ? sumLeads : Number(p.total_leads || 0));
+    }, 0),
     fair_leads: weekly.reduce((sum, p) => sum + Number(p.fair_leads || 0), 0),
     fb_leads: weekly.reduce((sum, p) => sum + Number(p.fb_leads || 0), 0),
     hp: weekly.reduce((sum, p) => sum + Number(p.hp || 0), 0),

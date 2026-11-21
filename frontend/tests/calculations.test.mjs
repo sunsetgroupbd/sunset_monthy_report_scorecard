@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 // Calculations module test
 import { 
   calculatePeriodTotalCollection, 
+  calculatePeriodTotalLeads,
   calculateCustomerTotalCollection, 
   calculateCustomerSummary, 
   calculateTotalAchieved, 
@@ -64,6 +65,18 @@ test('calculatePeriodTotalCollection respects manual override if present', () =>
 
   const total = calculatePeriodTotalCollection(period);
   assert.equal(total, 200000);
+});
+
+test('calculatePeriodTotalLeads sums fair_leads, fb_leads, hp, p, and fup', () => {
+  const period = {
+    fair_leads: 5,
+    fb_leads: 10,
+    hp: 3,
+    p: 4,
+    fup: 2,
+  };
+  assert.equal(calculatePeriodTotalLeads(period), 24);
+  assert.equal(calculatePeriodTotalLeads(null), 0);
 });
 
 test('calculateCustomerTotalCollection and customer summary calculation', () => {

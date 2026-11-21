@@ -235,7 +235,10 @@ function ManualScorecardContent() {
         tb_share_count: scorecard.tb_share_count,
         tb_hold_count: scorecard.tb_hold_count,
         tb_cancel_count: scorecard.tb_cancel_count,
-        periods: scorecard.periods,
+        periods: (scorecard.periods || []).map(p => ({
+          ...p,
+          total_leads: (p.fair_leads || 0) + (p.fb_leads || 0) + (p.hp || 0) + (p.p || 0) + (p.fup || 0)
+        })),
         customers: sanitizedCustomers
       };
 

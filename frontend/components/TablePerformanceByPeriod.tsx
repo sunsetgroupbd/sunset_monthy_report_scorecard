@@ -6,6 +6,7 @@ import {
   formatBDT, 
   formatNumber, 
   calculatePeriodTotalCollection,
+  calculatePeriodTotalLeads,
   calculateTotalAchieved,
   calculateAchievementPct
 } from '@/lib/calculations';
@@ -372,7 +373,7 @@ export default function TablePerformanceByPeriod({
 
                     {/* Total Lead after Fup */}
                     <td className="py-2 px-1 text-center font-bold text-slate-800 bg-slate-50 font-mono border-r border-slate-200">
-                      {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
+                      {calculatePeriodTotalLeads(period) || '0'}
                     </td>
 
                     {/* Activity Fields */}
@@ -493,7 +494,7 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-2 text-center font-extrabold text-amber-700">{formatNumber(achieved.fup)}</td>
                 {/* Total Lead Summary */}
                 <td className="py-2.5 px-2 text-center font-extrabold text-indigo-900 bg-indigo-50 font-mono border-r border-emerald-300">
-                  {formatNumber(achieved.fair_leads + achieved.fb_leads)}
+                  {formatNumber(achieved.total_leads ?? (achieved.fair_leads + achieved.fb_leads + achieved.hp + achieved.p + achieved.fup))}
                 </td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.dialed_calls)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.hold)}</td>
@@ -601,7 +602,7 @@ export default function TablePerformanceByPeriod({
                           Lead Pipeline
                         </h5>
                         <span className="text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                          Total Lead: {((period.fair_leads || 0) + (period.fb_leads || 0)) || '0'}
+                          Total Lead: {calculatePeriodTotalLeads(period) || '0'}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

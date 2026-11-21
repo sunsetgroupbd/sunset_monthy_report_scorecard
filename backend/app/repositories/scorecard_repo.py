@@ -178,7 +178,7 @@ class ScorecardRepository:
                         total_collection=final_total_col,
                         total_collection_override=tc_override,
                         total_achieved_override=ta_override,
-                        total_leads=incoming_p.total_leads if incoming_p else 0,
+                        total_leads=((incoming_p.fair_leads or 0) + (incoming_p.fb_leads or 0) + (incoming_p.hp or 0) + (incoming_p.p or 0) + (incoming_p.fup or 0)) if (incoming_p and ((incoming_p.fair_leads or 0) + (incoming_p.fb_leads or 0) + (incoming_p.hp or 0) + (incoming_p.p or 0) + (incoming_p.fup or 0)) > 0) else (incoming_p.total_leads if incoming_p else 0),
                         fair_leads=incoming_p.fair_leads if incoming_p else 0,
                         fb_leads=incoming_p.fb_leads if incoming_p else 0,
                         hp=incoming_p.hp if incoming_p else 0,
@@ -204,7 +204,7 @@ class ScorecardRepository:
                     period_obj.total_collection_override = tc_override
                     period_obj.total_achieved_override = ta_override
                     if incoming_p:
-                        period_obj.total_leads = incoming_p.total_leads
+                        period_obj.total_leads = ((incoming_p.fair_leads or 0) + (incoming_p.fb_leads or 0) + (incoming_p.hp or 0) + (incoming_p.p or 0) + (incoming_p.fup or 0)) if ((incoming_p.fair_leads or 0) + (incoming_p.fb_leads or 0) + (incoming_p.hp or 0) + (incoming_p.p or 0) + (incoming_p.fup or 0)) > 0 else incoming_p.total_leads
                         period_obj.fair_leads = incoming_p.fair_leads
                         period_obj.fb_leads = incoming_p.fb_leads
                         period_obj.hp = incoming_p.hp

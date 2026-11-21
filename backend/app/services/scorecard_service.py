@@ -49,7 +49,12 @@ class ScorecardService:
         # Total collection calculation or override
         calc_total_collection = achieved_new_sales + achieved_tb_amount + achieved_emi_amount
 
-        achieved_total_leads = sum((p.total_leads or 0) for p in weekly_periods)
+        achieved_total_leads = sum(
+            ((p.fair_leads or 0) + (p.fb_leads or 0) + (p.hp or 0) + (p.p or 0) + (p.fup or 0))
+            if ((p.fair_leads or 0) + (p.fb_leads or 0) + (p.hp or 0) + (p.p or 0) + (p.fup or 0)) > 0
+            else (p.total_leads or 0)
+            for p in weekly_periods
+        )
         achieved_fair_leads = sum((p.fair_leads or 0) for p in weekly_periods)
         achieved_fb_leads = sum((p.fb_leads or 0) for p in weekly_periods)
         achieved_hp = sum((p.hp or 0) for p in weekly_periods)

@@ -352,7 +352,7 @@ function ScorecardPrintContent() {
         {/* 6 Periodic Activity Checkpoint Rows: Till 5th .. Till 30/31st (NO TG ROW) */}
         {periodRows.map((pRow) => {
           const p = scorecard.periods?.find(item => item.period_index === pRow.idx) || {} as PeriodItem;
-          const totalLeadVal = (p.fair_leads || 0) + (p.fb_leads || 0);
+          const totalLeadVal = (p.fair_leads || 0) + (p.fb_leads || 0) + (p.hp || 0) + (p.p || 0) + (p.fup || 0);
           return (
             <div key={`prow-${pRow.idx}`} className={`grid grid-cols-18 border-b border-black text-center ${isPortrait ? 'h-[18px] text-[7px]' : 'h-[19px] text-[8px]'}`}>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold bg-slate-50">
