@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { CustomerItem, LeadStatus, CXType, PaymentType, PaymentStatus } from '@/types/scorecard';
 import { 
   formatBDT, 
-  calculateCustomerTotalCollection, 
   calculateCustomerSummary 
 } from '@/lib/calculations';
 import { 
@@ -16,7 +15,8 @@ import {
   CreditCard,
   CheckCircle2,
   Clock,
-  X
+  X,
+  Calendar
 } from 'lucide-react';
 
 interface CustomerCollectionPlanProps {
@@ -27,8 +27,19 @@ interface CustomerCollectionPlanProps {
   disabled: boolean;
 }
 
-const CX_TYPE_OPTIONS: CXType[] = ['New Sales', 'TB', 'EMI'];
-const PAYMENT_TYPE_OPTIONS: PaymentType[] = ['Payable Amount', 'Paid'];
+export const COLLECTION_TYPE_OPTIONS = [
+  { value: 'New Sales', label: 'New Sales' },
+  { value: 'TB', label: 'TB amount' },
+  { value: 'EMI', label: 'EMI amount' },
+] as const;
+
+export function getCollectionCategoryLabel(val?: string): string {
+  if (val === 'TB' || val === 'TB amount') return 'TB amount';
+  if (val === 'EMI' || val === 'EMI amount') return 'EMI amount';
+  return 'New Sales';
+}
+
+const PAYMENT_STATUS_OPTIONS: PaymentStatus[] = ['Paid', 'Pending'];
 const LEAD_STATUS_OPTIONS: LeadStatus[] = [
   'HP',
   'P',
@@ -65,6 +76,7 @@ const EMPTY_FORM: CustomerItem = {
   next_collection_date_2: '',
   date_1: '',
   date_2: '',
+  plan_dates: [],
   in_out_plan: 'In Plan',
   new_sales_amount: 0,
   tb_amount: 0,
@@ -98,7 +110,12 @@ export default function TableCustomerCollectionPlan({
   };
 
   const handleOpenAdd = () => {
-    setFormData({ ...EMPTY_FORM });
+    setFormData({ 
+      ...EMPTY_FORM, 
+      collection_date: new Date().toISOString().split('T')[0],
+      payment_date: new Date().toISOString().split('T')[0],
+      plan_dates: [] 
+    });
     setEditingIndex(null);
     setFormError('');
     setFormOpen(true);
@@ -107,7 +124,18 @@ export default function TableCustomerCollectionPlan({
   const handleOpenEdit = (idx: number) => {
     const cust = customers[idx];
     if (!cust) return;
-    setFormData({ ...cust });
+    const pDates = (cust.plan_dates && cust.plan_dates.length > 0)
+      ? [...cust.plan_dates]
+      : [cust.date_1, cust.date_2].filter(Boolean) as string[];
+
+    setFormData({ 
+      ...cust,
+      cx_type: cust.cx_type || 'New Sales',
+      collection_date: cust.collection_date || cust.payment_date || '',
+      payment_date: cust.payment_date || cust.collection_date || '',
+      amount: cust.amount ?? (Number(cust.paid_amount || 0) + Number(cust.unpaid_amount || 0)),
+      plan_dates: pDates
+    });
     setEditingIndex(idx);
     setFormError('');
     setFormOpen(true);
@@ -117,39 +145,74 @@ export default function TableCustomerCollectionPlan({
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
 
-      // Conditional payment logic when payment_type or amount changes:
-      if (field === 'payment_type' || field === 'amount' || field === 'cx_type') {
-        const amt = Number(field === 'amount' ? value : updated.amount) || 0;
-        const pType = field === 'payment_type' ? value : updated.payment_type;
+      // When collection category or amount or payment status changes:
+      if (field === 'cx_type' || field === 'amount' || field === 'payment_status' || field === 'payment_type') {
         const cType = field === 'cx_type' ? value : updated.cx_type;
+        const amt = Number(field === 'amount' ? value : updated.amount) || 0;
+        const isPaid = (field === 'payment_status' ? value === 'Paid' : (field === 'payment_type' ? value === 'Paid' : updated.payment_status === 'Paid'));
 
-        if (pType === 'Payable Amount') {
-          updated.unpaid_amount = amt;
-          updated.paid_amount = 0;
-          updated.payment_status = 'Pending';
-        } else {
+        if (isPaid) {
           updated.paid_amount = amt;
           updated.unpaid_amount = 0;
           updated.payment_status = 'Paid';
+          updated.payment_type = 'Paid';
+        } else {
+          updated.unpaid_amount = amt;
+          updated.paid_amount = 0;
+          updated.payment_status = 'Pending';
+          updated.payment_type = 'Payable Amount';
         }
 
-        // Auto-assign product distribution if user hasn't split it manually
-        if (cType === 'New Sales') {
-          updated.new_sales_amount = amt;
-          updated.tb_amount = 0;
-          updated.emi_amount = 0;
-        } else if (cType === 'TB') {
+        // Assign to the selected collection category
+        if (cType === 'TB' || cType === 'TB amount') {
           updated.tb_amount = amt;
           updated.new_sales_amount = 0;
           updated.emi_amount = 0;
-        } else if (cType === 'EMI') {
+          updated.cx_type = 'TB';
+        } else if (cType === 'EMI' || cType === 'EMI amount') {
           updated.emi_amount = amt;
           updated.new_sales_amount = 0;
           updated.tb_amount = 0;
+          updated.cx_type = 'EMI';
+        } else {
+          updated.new_sales_amount = amt;
+          updated.tb_amount = 0;
+          updated.emi_amount = 0;
+          updated.cx_type = 'New Sales';
         }
+        updated.amount = amt;
+        updated.total_collection = amt;
+      }
+
+      if (field === 'collection_date') {
+        updated.collection_date = value;
+        updated.payment_date = value;
       }
 
       return updated;
+    });
+  };
+
+  // Plan date adder / remover
+  const handleAddPlanDate = () => {
+    setFormData(prev => ({
+      ...prev,
+      plan_dates: [...(prev.plan_dates || []), new Date().toISOString().split('T')[0]]
+    }));
+  };
+
+  const handlePlanDateChange = (dIdx: number, val: string) => {
+    setFormData(prev => {
+      const nextDates = [...(prev.plan_dates || [])];
+      nextDates[dIdx] = val;
+      return { ...prev, plan_dates: nextDates };
+    });
+  };
+
+  const handleRemovePlanDate = (dIdx: number) => {
+    setFormData(prev => {
+      const nextDates = (prev.plan_dates || []).filter((_, i) => i !== dIdx);
+      return { ...prev, plan_dates: nextDates };
     });
   };
 
@@ -168,8 +231,10 @@ export default function TableCustomerCollectionPlan({
       onChangeCustomer(idx, 'payment_type', 'Paid');
       onChangeCustomer(idx, 'paid_amount', amt);
       onChangeCustomer(idx, 'unpaid_amount', 0);
-      if (!cust.payment_date) {
-        onChangeCustomer(idx, 'payment_date', new Date().toISOString().split('T')[0]);
+      if (!cust.payment_date && !cust.collection_date) {
+        const today = new Date().toISOString().split('T')[0];
+        onChangeCustomer(idx, 'payment_date', today);
+        onChangeCustomer(idx, 'collection_date', today);
       }
     } else {
       // Mark as Pending / Payable Amount
@@ -180,11 +245,6 @@ export default function TableCustomerCollectionPlan({
     }
   };
 
-  const formCalculatedTotal = 
-    (Number(formData.new_sales_amount) || 0) + 
-    (Number(formData.tb_amount) || 0) + 
-    (Number(formData.emi_amount) || 0);
-
   const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customer_name.trim()) {
@@ -193,24 +253,34 @@ export default function TableCustomerCollectionPlan({
     }
 
     const amt = Number(formData.amount) || 0;
-    const isPaid = formData.payment_type === 'Paid';
+    const isPaid = formData.payment_status === 'Paid';
+    const cType = formData.cx_type || 'New Sales';
+    const cDate = formData.collection_date || formData.payment_date || undefined;
+    const validPlanDates = (formData.plan_dates || []).filter(d => Boolean(d && d.trim()));
 
     const payload: CustomerItem = {
       ...formData,
       customer_name: formData.customer_name.trim(),
-      cx_type: formData.cx_type || 'New Sales',
-      payment_type: formData.payment_type || 'Paid',
-      amount: amt,
-      payment_date: formData.payment_date || undefined,
+      cx_type: (cType === 'TB' || cType === 'TB amount') ? 'TB' : ((cType === 'EMI' || cType === 'EMI amount') ? 'EMI' : 'New Sales'),
+      payment_type: isPaid ? 'Paid' : 'Payable Amount',
       payment_status: isPaid ? 'Paid' : 'Pending',
-      paid_amount: isPaid ? amt : (Number(formData.paid_amount) || 0),
-      unpaid_amount: !isPaid ? amt : (Number(formData.unpaid_amount) || 0),
-      new_sales_amount: Number(formData.new_sales_amount) || 0,
-      tb_amount: Number(formData.tb_amount) || 0,
-      emi_amount: Number(formData.emi_amount) || 0,
-      total_collection: formCalculatedTotal || amt,
+      amount: amt,
+      paid_amount: isPaid ? amt : 0,
+      unpaid_amount: !isPaid ? amt : 0,
+      collection_date: cDate,
+      payment_date: cDate,
+      next_collection_date: formData.next_collection_date || undefined,
+      new_sales_amount: (cType === 'New Sales') ? amt : 0,
+      tb_amount: (cType === 'TB' || cType === 'TB amount') ? amt : 0,
+      emi_amount: (cType === 'EMI' || cType === 'EMI amount') ? amt : 0,
+      total_collection: amt,
+      in_out_plan: formData.in_out_plan || 'In Plan',
+      plan_dates: validPlanDates,
+      date_1: validPlanDates[0] || undefined,
+      date_2: validPlanDates[1] || undefined,
       collection_probability: Number(formData.collection_probability) || 50,
-      lead_status: formData.lead_status || 'HP'
+      lead_status: formData.lead_status || 'HP',
+      remarks: formData.remarks || ''
     };
 
     if (editingIndex !== null) {
@@ -235,10 +305,10 @@ export default function TableCustomerCollectionPlan({
           <CreditCard className="w-5 h-5 text-emerald-600" />
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Table 2: CX Customer Collection Tracking
+              Monthly Probable Collection List
             </h2>
             <p className="text-xs text-slate-500">
-              Customer-level payment tracking (New Sales, TB, EMI), payable vs. paid status, and collection probabilities.
+              Customer collection tracking for New Sales, TB amount, and EMI amount with IN/OUT plan dates.
             </p>
           </div>
         </div>
@@ -250,7 +320,7 @@ export default function TableCustomerCollectionPlan({
             className="flex items-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Customer Record</span>
+            <span>Add Collection Entry</span>
           </button>
         )}
       </div>
@@ -303,10 +373,10 @@ export default function TableCustomerCollectionPlan({
                 <CreditCard className="w-5 h-5 text-emerald-600" />
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    {editingIndex !== null ? 'Edit Customer Collection Entry' : 'Add New Customer Collection Entry'}
+                    {editingIndex !== null ? 'Edit Collection Entry' : 'Add New Collection Entry'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Enter customer details, payment type (New Sales, TB, EMI), and amounts.
+                    Monthly Probable Collection List — Select collection category, amount, date, and plan dates.
                   </p>
                 </div>
               </div>
@@ -327,7 +397,7 @@ export default function TableCustomerCollectionPlan({
             )}
 
             <form onSubmit={handleSaveForm} className="space-y-4">
-              {/* Row 1: CX Name & CX Type */}
+              {/* Row 1: CX Name, Lead Status */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -345,133 +415,7 @@ export default function TableCustomerCollectionPlan({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    CX Type (Product)
-                  </label>
-                  <select
-                    value={formData.cx_type || 'New Sales'}
-                    onChange={(e) => handleFormChange('cx_type', e.target.value as CXType)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {CX_TYPE_OPTIONS.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 2: Payment Type Dropdown, Amount, and Date */}
-              <div className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Amount / Payment Type
-                    </label>
-                    <select
-                      value={formData.payment_type || 'Paid'}
-                      onChange={(e) => handleFormChange('payment_type', e.target.value as PaymentType)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                    >
-                      {PAYMENT_TYPE_OPTIONS.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {formData.payment_type === 'Payable Amount' ? 'Payable Amount (BDT)' : 'Paid Amount (BDT)'}
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="500"
-                      value={formData.amount || ''}
-                      onChange={(e) => handleFormChange('amount', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className={`w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-emerald-500 ${
-                        formData.payment_type === 'Payable Amount' ? 'text-rose-700' : 'text-emerald-700'
-                      }`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {formData.payment_type === 'Payable Amount' ? 'Expected Due Date' : 'Payment Received Date'}
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.payment_date || ''}
-                      onChange={(e) => handleFormChange('payment_date', e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] pt-1">
-                  <span className="text-slate-500">
-                    Status: <strong className={formData.payment_type === 'Paid' ? 'text-emerald-700' : 'text-amber-700'}>
-                      {formData.payment_type === 'Paid' ? 'Paid / Settled' : 'Pending / Outstanding'}
-                    </strong>
-                  </span>
-                  <span className="text-slate-500">
-                    Auto assigned to: <strong className="text-slate-800">{formData.cx_type || 'New Sales'}</strong>
-                  </span>
-                </div>
-              </div>
-
-              {/* Row 3: Product Breakdown manual adjustments if needed */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    New Sales (BDT)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="500"
-                    value={formData.new_sales_amount || ''}
-                    onChange={(e) => handleFormChange('new_sales_amount', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    TB Amount (BDT)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="500"
-                    value={formData.tb_amount || ''}
-                    onChange={(e) => handleFormChange('tb_amount', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    EMI Amount (BDT)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="500"
-                    value={formData.emi_amount || ''}
-                    onChange={(e) => handleFormChange('emi_amount', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Row 4: Status and Probability */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    New Lead Status
+                    Lead Status
                   </label>
                   <select
                     value={formData.lead_status || 'HP'}
@@ -483,21 +427,175 @@ export default function TableCustomerCollectionPlan({
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    IN / OUT Plan
-                  </label>
-                  <select
-                    value={formData.in_out_plan || 'In Plan'}
-                    onChange={(e) => handleFormChange('in_out_plan', e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="In Plan">In Plan</option>
-                    <option value="Out Plan">Out Plan</option>
-                  </select>
+              {/* Row 2: Monthly Probable Collection Category, Amount, Payment Status, and Date */}
+              <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                  <span>Monthly Probable Collection Details</span>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Category: {getCollectionCategoryLabel(formData.cx_type)}
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Dropdown: New Sales, TB amount, EMI amount */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Collection Category <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formData.cx_type === 'TB' || formData.cx_type === 'TB amount' ? 'TB' : (formData.cx_type === 'EMI' || formData.cx_type === 'EMI amount' ? 'EMI' : 'New Sales')}
+                      onChange={(e) => handleFormChange('cx_type', e.target.value as CXType)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {COLLECTION_TYPE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Amount (BDT) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {getCollectionCategoryLabel(formData.cx_type)} Amount (BDT) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      value={formData.amount || ''}
+                      onChange={(e) => handleFormChange('amount', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  {/* Payment Status: Paid vs Pending */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Payment Status
+                    </label>
+                    <select
+                      value={formData.payment_status || 'Paid'}
+                      onChange={(e) => handleFormChange('payment_status', e.target.value as PaymentStatus)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="Paid">Paid / Received</option>
+                      <option value="Pending">Payable / Pending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Date for the selected collection category */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {getCollectionCategoryLabel(formData.cx_type)} Date
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.collection_date || formData.payment_date || ''}
+                      onChange={(e) => {
+                        handleFormChange('collection_date', e.target.value);
+                      }}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  {/* Next Collection Date (optional) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Next Collection Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.next_collection_date || ''}
+                      onChange={(e) => handleFormChange('next_collection_date', e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: IN / OUT Plan & Dynamic Activity Dates */}
+              <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800">
+                      IN / OUT Plan & Activity Dates
+                    </label>
+                    <p className="text-[11px] text-slate-500">
+                      Select In Plan / Out Plan and add as many visit/follow-up dates as needed.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddPlanDate}
+                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Date</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Plan Status
+                    </label>
+                    <select
+                      value={formData.in_out_plan || 'In Plan'}
+                      onChange={(e) => handleFormChange('in_out_plan', e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="In Plan">In Plan</option>
+                      <option value="Out Plan">Out Plan</option>
+                      <option value="No Plan">No Plan</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Activity / Follow-up Dates ({(formData.plan_dates || []).length})
+                    </label>
+
+                    {(formData.plan_dates || []).length === 0 ? (
+                      <div className="p-2.5 bg-white border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                        No activity dates added yet. Click &quot;+ Add Date&quot; above to add dates.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {(formData.plan_dates || []).map((pDate, dIdx) => (
+                          <div key={dIdx} className="flex items-center space-x-2">
+                            <span className="text-[10px] font-bold text-slate-500 w-12 shrink-0">
+                              Date {dIdx + 1}:
+                            </span>
+                            <input
+                              type="date"
+                              value={pDate}
+                              onChange={(e) => handlePlanDateChange(dIdx, e.target.value)}
+                              className="flex-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePlanDate(dIdx)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                              title="Remove Date"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 4: Probability and Remarks */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Collection Probability % ({formData.collection_probability || 50}%)
@@ -512,68 +610,19 @@ export default function TableCustomerCollectionPlan({
                     className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-              </div>
 
-              {/* Row 5: Dates */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Collection Date
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Remarks / Notes
                   </label>
                   <input
-                    type="date"
-                    value={formData.collection_date || ''}
-                    onChange={(e) => handleFormChange('collection_date', e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                    type="text"
+                    value={formData.remarks || ''}
+                    onChange={(e) => handleFormChange('remarks', e.target.value)}
+                    placeholder="e.g. Cheque clearance promised, client requested follow-up..."
+                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Next Collec Date
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.next_collection_date || ''}
-                    onChange={(e) => handleFormChange('next_collection_date', e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Date-1
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date_1 || ''}
-                    onChange={(e) => handleFormChange('date_1', e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Date-2
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date_2 || ''}
-                    onChange={(e) => handleFormChange('date_2', e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-
-              {/* Row 6: Remarks */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Remarks / Notes
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.remarks || ''}
-                  onChange={(e) => handleFormChange('remarks', e.target.value)}
-                  placeholder="e.g. Cheque clearance promised, client requested follow-up..."
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-emerald-500"
-                />
               </div>
 
               {/* Form Buttons */}
@@ -590,7 +639,7 @@ export default function TableCustomerCollectionPlan({
                   className="px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition cursor-pointer flex items-center space-x-1.5"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{editingIndex !== null ? 'Update Customer' : 'Save Customer'}</span>
+                  <span>{editingIndex !== null ? 'Update Entry' : 'Save Collection Entry'}</span>
                 </button>
               </div>
             </form>
@@ -606,7 +655,7 @@ export default function TableCustomerCollectionPlan({
               <AlertTriangle className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold text-slate-900 mb-1">
-              Delete Customer Entry?
+              Delete Collection Entry?
             </h3>
             <p className="text-xs text-slate-500 mb-6">
               Are you sure you want to remove &quot;{customers[deleteIndex]?.customer_name || 'this entry'}&quot;?
@@ -631,30 +680,21 @@ export default function TableCustomerCollectionPlan({
         </div>
       )}
 
-      {/* Prediction Payment Table with Horizontal Scroll */}
+      {/* Monthly Probable Collection Table with Horizontal Scroll */}
       <div className="overflow-x-auto relative border border-slate-200 rounded-xl shadow-xs">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px] tracking-wider whitespace-nowrap">
               <th className="py-2.5 px-3 min-w-[35px] text-center sticky left-0 z-20 bg-slate-100 border-r border-slate-200">#</th>
               <th className="py-2.5 px-3 min-w-[160px] sticky left-[35px] z-20 bg-slate-100 border-r border-slate-200">Customer Name *</th>
-              <th className="py-2.5 px-2 min-w-[95px] text-center">CX Type</th>
+              <th className="py-2.5 px-2.5 min-w-[105px] text-center">Collection Category</th>
               <th className="py-2.5 px-2.5 min-w-[110px] text-center">Payment Status</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right">Amount</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right text-emerald-800">Paid</th>
               <th className="py-2.5 px-2.5 min-w-[95px] text-right text-rose-800">Unpaid</th>
-              <th className="py-2.5 px-2.5 min-w-[105px]">Payment Date</th>
               <th className="py-2.5 px-2.5 min-w-[105px]">Collection Date</th>
               <th className="py-2.5 px-2.5 min-w-[105px]">Next Collec</th>
-              <th className="py-2.5 px-2 min-w-[85px] text-center">Plan</th>
-              <th className="py-2.5 px-2 min-w-[85px]">Date-1</th>
-              <th className="py-2.5 px-2 min-w-[85px]">Date-2</th>
-              <th className="py-2.5 px-2.5 min-w-[90px] text-right">New Sales</th>
-              <th className="py-2.5 px-2.5 min-w-[90px] text-right">TB</th>
-              <th className="py-2.5 px-2.5 min-w-[90px] text-right">EMI</th>
-              <th className="py-2.5 px-2.5 min-w-[110px] text-right bg-emerald-50 text-emerald-950 font-extrabold">
-                Total Collection
-              </th>
+              <th className="py-2.5 px-3 min-w-[150px]">IN / OUT Plan & Dates</th>
               <th className="py-2.5 px-2.5 min-w-[100px] text-center">Lead Status</th>
               <th className="py-2.5 px-2 min-w-[65px] text-center">Prob %</th>
               <th className="py-2.5 px-3 min-w-[130px]">Remarks</th>
@@ -665,15 +705,20 @@ export default function TableCustomerCollectionPlan({
           <tbody className="divide-y divide-slate-100 font-medium">
             {customers.length === 0 ? (
               <tr>
-                <td colSpan={21} className="py-8 text-center text-slate-400 text-xs">
-                  No customer collection records yet. Click &quot;Add Customer Record&quot; above to enter records.
+                <td colSpan={14} className="py-8 text-center text-slate-400 text-xs">
+                  No collection records yet. Click &quot;Add Collection Entry&quot; above to enter records.
                 </td>
               </tr>
             ) : (
               customers.map((c, idx) => {
-                const totalCol = calculateCustomerTotalCollection(c);
                 const isPaid = c.payment_status === 'Paid' || (Number(c.paid_amount) > 0 && Number(c.unpaid_amount) === 0);
                 const badgeStyle = LEAD_BADGE_STYLES[c.lead_status] || LEAD_BADGE_STYLES.HP;
+                const cCategory = getCollectionCategoryLabel(c.cx_type);
+                const totalAmt = c.amount ?? (Number(c.paid_amount || 0) + Number(c.unpaid_amount || 0));
+
+                const planDates = (c.plan_dates && c.plan_dates.length > 0)
+                  ? c.plan_dates
+                  : [c.date_1, c.date_2].filter(Boolean) as string[];
 
                 return (
                   <tr key={c.id || idx} className="hover:bg-slate-50/80 transition-colors">
@@ -687,18 +732,17 @@ export default function TableCustomerCollectionPlan({
                       {c.customer_name || <span className="text-slate-400 italic">Untitled</span>}
                     </td>
 
-                    {/* CX Type Dropdown */}
-                    <td className="py-1 px-2 text-center">
-                      <select
-                        disabled={disabled}
-                        value={c.cx_type || 'New Sales'}
-                        onChange={(e) => onChangeCustomer(idx, 'cx_type', e.target.value as CXType)}
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-800 focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                      >
-                        {CX_TYPE_OPTIONS.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                    {/* Collection Category Badge */}
+                    <td className="py-1 px-2.5 text-center">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                        (c.cx_type === 'TB' || c.cx_type === 'TB amount')
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : (c.cx_type === 'EMI' || c.cx_type === 'EMI amount')
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}>
+                        {cCategory}
+                      </span>
                     </td>
 
                     {/* Payment Status (Quick Toggle Button) */}
@@ -730,7 +774,7 @@ export default function TableCustomerCollectionPlan({
 
                     {/* Amount */}
                     <td className="py-2 px-2.5 text-right font-bold text-slate-900 font-mono">
-                      {formatBDT(c.amount ?? (Number(c.paid_amount || 0) + Number(c.unpaid_amount || 0)))}
+                      {formatBDT(totalAmt)}
                     </td>
 
                     {/* Paid Amount */}
@@ -743,63 +787,41 @@ export default function TableCustomerCollectionPlan({
                       {formatBDT(c.unpaid_amount || 0)}
                     </td>
 
-                    {/* Payment Date */}
-                    <td className="py-2 px-2.5 text-slate-600 text-[11px] font-mono">
-                      {c.payment_date || '—'}
-                    </td>
-
                     {/* Collection Date */}
-                    <td className="py-2 px-2.5 text-slate-600 text-[11px] font-mono">
-                      {c.collection_date || '—'}
+                    <td className="py-2 px-2.5 text-slate-700 text-[11px] font-mono">
+                      {c.collection_date || c.payment_date || '—'}
                     </td>
 
                     {/* Next Collection Date */}
-                    <td className="py-2 px-2.5 text-slate-600 text-[11px] font-mono">
+                    <td className="py-2 px-2.5 text-slate-500 text-[11px] font-mono">
                       {c.next_collection_date || '—'}
                     </td>
 
-                    {/* In/Out Plan */}
-                    <td className="py-2 px-2 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        c.in_out_plan === 'In Plan' 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {c.in_out_plan || 'In Plan'}
-                      </span>
+                    {/* IN / OUT Plan & Dynamic Dates */}
+                    <td className="py-2 px-3 text-[11px]">
+                      <div className="flex flex-col space-y-1">
+                        <span className={`self-start px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          c.in_out_plan === 'In Plan' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : (c.in_out_plan === 'Out Plan' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700')
+                        }`}>
+                          {c.in_out_plan || 'In Plan'}
+                        </span>
+                        {planDates.length === 0 ? (
+                          <span className="text-slate-400 text-[10px] italic">No dates</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1 pt-0.5">
+                            {planDates.map((d, dIdx) => (
+                              <span key={dIdx} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] border border-slate-200">
+                                {d}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
-                    {/* Date 1 */}
-                    <td className="py-2 px-2 text-slate-500 text-[11px] font-mono">
-                      {c.date_1 || '—'}
-                    </td>
-
-                    {/* Date 2 */}
-                    <td className="py-2 px-2 text-slate-500 text-[11px] font-mono">
-                      {c.date_2 || '—'}
-                    </td>
-
-                    {/* New Sales */}
-                    <td className="py-2 px-2.5 text-right font-mono text-slate-800">
-                      {formatBDT(c.new_sales_amount || 0)}
-                    </td>
-
-                    {/* TB */}
-                    <td className="py-2 px-2.5 text-right font-mono text-slate-800">
-                      {formatBDT(c.tb_amount || 0)}
-                    </td>
-
-                    {/* EMI */}
-                    <td className="py-2 px-2.5 text-right font-mono text-slate-800">
-                      {formatBDT(c.emi_amount || 0)}
-                    </td>
-
-                    {/* Total Collection */}
-                    <td className="py-2 px-2.5 text-right font-extrabold text-emerald-950 bg-emerald-50/70 font-mono">
-                      {formatBDT(totalCol)}
-                    </td>
-
-                    {/* Lead Status Dropdown with visually distinguishable badges */}
+                    {/* Lead Status Dropdown */}
                     <td className="py-1 px-2 text-center">
                       <select
                         disabled={disabled}
@@ -832,16 +854,16 @@ export default function TableCustomerCollectionPlan({
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(idx)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition"
-                            title="Edit Record"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition cursor-pointer"
+                            title="Edit Entry"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeleteIndex(idx)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                            title="Delete Record"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title="Delete Entry"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

@@ -59,6 +59,7 @@ class CustomerItem(BaseModel):
     next_collection_date_2: Optional[date] = None
     date_1: Optional[date] = None
     date_2: Optional[date] = None
+    plan_dates: Optional[List[str]] = Field(default_factory=list)
     in_out_plan: Optional[str] = Field(default="In Plan", max_length=100)
     new_sales_amount: Decimal = Field(default=Decimal("0.00"), ge=0)
     tb_amount: Decimal = Field(default=Decimal("0.00"), ge=0)

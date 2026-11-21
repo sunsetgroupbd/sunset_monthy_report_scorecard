@@ -472,10 +472,10 @@ function ScorecardPrintContent() {
                 {c?.in_out_plan || ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-                {c?.date_1 || ''}
+                {c?.plan_dates?.[0] || c?.date_1 || ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-                {c?.date_2 || ''}
+                {c?.plan_dates?.[1] || c?.date_2 || ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
                 {c?.new_sales_amount ? formatNumber(c.new_sales_amount) : ''}

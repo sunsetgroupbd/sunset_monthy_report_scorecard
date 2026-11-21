@@ -245,8 +245,9 @@ class ScorecardRepository:
                     cust_obj.collection_date = cust_in.collection_date
                     cust_obj.next_collection_date = cust_in.next_collection_date
                     cust_obj.next_collection_date_2 = cust_in.next_collection_date_2
-                    cust_obj.date_1 = cust_in.date_1
-                    cust_obj.date_2 = cust_in.date_2
+                    p_dates = [str(d).strip() for d in (cust_in.plan_dates or []) if d and str(d).strip()]
+                    cust_obj.date_1 = p_dates[0] if len(p_dates) > 0 else cust_in.date_1
+                    cust_obj.date_2 = p_dates[1] if len(p_dates) > 1 else cust_in.date_2
                     cust_obj.in_out_plan = cust_in.in_out_plan
                     cust_obj.new_sales_amount = cust_in.new_sales_amount
                     cust_obj.tb_amount = cust_in.tb_amount
@@ -259,6 +260,9 @@ class ScorecardRepository:
                     # Insert new customer row
                     new_cust_id = generate_uuid()
                     seen_cust_ids.add(new_cust_id)
+                    p_dates = [str(d).strip() for d in (cust_in.plan_dates or []) if d and str(d).strip()]
+                    d1_val = p_dates[0] if len(p_dates) > 0 else cust_in.date_1
+                    d2_val = p_dates[1] if len(p_dates) > 1 else cust_in.date_2
                     cust_obj = ManualScorecardCustomer(
                         id=new_cust_id,
                         scorecard_id=scorecard.id,
@@ -273,8 +277,8 @@ class ScorecardRepository:
                         collection_date=cust_in.collection_date,
                         next_collection_date=cust_in.next_collection_date,
                         next_collection_date_2=cust_in.next_collection_date_2,
-                        date_1=cust_in.date_1,
-                        date_2=cust_in.date_2,
+                        date_1=d1_val,
+                        date_2=d2_val,
                         in_out_plan=cust_in.in_out_plan,
                         new_sales_amount=cust_in.new_sales_amount,
                         tb_amount=cust_in.tb_amount,
@@ -422,6 +426,7 @@ class ScorecardRepository:
                 next_collection_date_2=getattr(c, 'next_collection_date_2', None),
                 date_1=c.date_1,
                 date_2=c.date_2,
+                plan_dates=[str(d) for d in [c.date_1, c.date_2] if d is not None],
                 in_out_plan=c.in_out_plan,
                 new_sales_amount=c.new_sales_amount,
                 tb_amount=c.tb_amount,

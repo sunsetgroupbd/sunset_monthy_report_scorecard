@@ -1,7 +1,7 @@
 export type UserRole = 'ADMIN' | 'TL' | 'CO' | 'EMPLOYEE';
 export type ScorecardStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'CLOSED';
 export type LeadStatus = 'HP' | 'P' | 'Fup' | 'Cancel' | 'Hold' | 'Next Month' | 'Next Year' | 'NR';
-export type CXType = 'New Sales' | 'TB' | 'EMI';
+export type CXType = 'New Sales' | 'TB' | 'EMI' | 'TB amount' | 'EMI amount';
 export type PaymentType = 'Payable Amount' | 'Paid';
 export type PaymentStatus = 'Paid' | 'Pending';
 
@@ -91,6 +91,7 @@ export interface CustomerItem {
   next_collection_date_2?: string;
   date_1?: string;
   date_2?: string;
+  plan_dates?: string[];
   in_out_plan?: string;
   new_sales_amount: number;
   tb_amount: number;
