@@ -17,7 +17,10 @@ import {
   Lock, 
   Unlock, 
   History,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  ArrowLeft,
+  Award
 } from 'lucide-react';
 
 interface ScorecardHeaderProps {
@@ -33,6 +36,7 @@ interface ScorecardHeaderProps {
   onApprove: () => void;
   onClose: () => void;
   onReopen: () => void;
+  onReject?: () => void;
   onOpenAuditLogs: () => void;
   isSaving: boolean;
   canEdit: boolean;
@@ -40,6 +44,9 @@ interface ScorecardHeaderProps {
   canApprove: boolean;
   canClose: boolean;
   canReopen: boolean;
+  canReject?: boolean;
+  isReviewer?: boolean;
+  onBackToQueue?: () => void;
 }
 
 export default function ScorecardHeader({
@@ -55,6 +62,7 @@ export default function ScorecardHeader({
   onApprove,
   onClose,
   onReopen,
+  onReject,
   onOpenAuditLogs,
   isSaving,
   canEdit,
@@ -62,6 +70,9 @@ export default function ScorecardHeader({
   canApprove,
   canClose,
   canReopen,
+  canReject,
+  isReviewer,
+  onBackToQueue
 }: ScorecardHeaderProps) {
   const employee = scorecard.employee;
 
@@ -186,6 +197,11 @@ export default function ScorecardHeader({
               <Lock className="w-4 h-4 mr-1 text-purple-600" />
               This scorecard is locked against editing.
             </span>
+          ) : isReviewer ? (
+            <span className="flex items-center text-indigo-700 font-medium">
+              <Award className="w-4 h-4 mr-1 text-indigo-600" />
+              Reviewing member scorecard. Enter Sheet/Call scores and Quality Marking below.
+            </span>
           ) : (
             <span>
               All values must be entered manually. Remember to save drafts regularly.
@@ -194,8 +210,19 @@ export default function ScorecardHeader({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Save Draft */}
-          {canEdit && (
+          {/* Back to Submissions Queue (Admin / Reviewer) */}
+          {onBackToQueue && (
+            <button
+              onClick={onBackToQueue}
+              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Submissions Queue</span>
+            </button>
+          )}
+
+          {/* Member Save Draft */}
+          {canEdit && !isReviewer && (
             <button
               onClick={onSaveDraft}
               disabled={isSaving}
@@ -206,8 +233,20 @@ export default function ScorecardHeader({
             </button>
           )}
 
-          {/* Submit */}
-          {canSubmit && (
+          {/* Reviewer / Admin Save Evaluation */}
+          {isReviewer && scorecard.can_edit_supervisor_fields && scorecard.status !== 'CLOSED' && (
+            <button
+              onClick={onSaveDraft}
+              disabled={isSaving}
+              className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow transition disabled:opacity-50"
+            >
+              <Award className="w-4 h-4" />
+              <span>{isSaving ? 'Saving...' : 'Save Evaluation'}</span>
+            </button>
+          )}
+
+          {/* Submit (only for member/owner in DRAFT) */}
+          {canSubmit && !isReviewer && (
             <button
               onClick={onSubmit}
               disabled={isSaving}
@@ -215,6 +254,18 @@ export default function ScorecardHeader({
             >
               <Send className="w-4 h-4" />
               <span>Submit Scorecard</span>
+            </button>
+          )}
+
+          {/* Request Changes / Return to Draft (Reviewer in SUBMITTED status) */}
+          {canReject && onReject && (
+            <button
+              onClick={onReject}
+              disabled={isSaving}
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-xl shadow-sm transition disabled:opacity-50"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Request Changes / Return to Draft</span>
             </button>
           )}
 

@@ -477,20 +477,14 @@ class ScorecardRepository:
         is_owner = (scorecard.employee_id == current_user.id)
         is_closed = (scorecard.status == "CLOSED")
 
-        can_edit = False
-        if is_admin:
-            can_edit = True
-        elif not is_closed:
-            if is_owner and scorecard.status == "DRAFT":
-                can_edit = True
-            elif is_supervisor and scorecard.status in ("DRAFT", "SUBMITTED"):
-                can_edit = True
-
+        # Owner edits draft numbers; Admin/Supervisor evaluates and approves
+        can_edit = is_owner and (scorecard.status == "DRAFT") and not is_closed
         can_edit_supervisor_fields = (is_admin or is_supervisor) and not is_closed
-        can_submit = (scorecard.status == "DRAFT") and (is_owner or is_supervisor or is_admin)
+        can_submit = (scorecard.status == "DRAFT") and is_owner
         can_approve = (scorecard.status == "SUBMITTED") and (is_supervisor or is_admin)
         can_close = (scorecard.status in ("APPROVED", "SUBMITTED")) and (is_admin or is_supervisor)
         can_reopen = is_closed and is_admin
+        can_reject = (scorecard.status == "SUBMITTED") and (is_supervisor or is_admin)
 
         return ScorecardResponse(
             id=scorecard.id,
@@ -535,7 +529,8 @@ class ScorecardRepository:
             can_submit=can_submit,
             can_approve=can_approve,
             can_close=can_close,
-            can_reopen=can_reopen
+            can_reopen=can_reopen,
+            can_reject=can_reject
         )
 
     @staticmethod

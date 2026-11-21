@@ -180,6 +180,7 @@ export interface ScorecardResponse {
   can_approve: boolean;
   can_close: boolean;
   can_reopen: boolean;
+  can_reject?: boolean;
 }
 
 export interface ScorecardSubmissionItem {

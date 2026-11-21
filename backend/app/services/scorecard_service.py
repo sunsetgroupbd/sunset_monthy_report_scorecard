@@ -208,12 +208,14 @@ class ScorecardService:
         total_achieved, achievement_pct = ScorecardService.calculate_period_totals(periods)
         customer_summary = CustomerSummary()
 
-        can_edit = True
+        is_owner = (employee.id == current_user.id)
+        can_edit = is_owner
         can_edit_supervisor_fields = (current_user.role in ("ADMIN", "TL", "CO"))
-        can_submit = True
+        can_submit = is_owner
         can_approve = False
         can_close = False
         can_reopen = False
+        can_reject = False
 
         emp_profile_resp = None
         if employee:
@@ -271,5 +273,6 @@ class ScorecardService:
             can_submit=can_submit,
             can_approve=can_approve,
             can_close=can_close,
-            can_reopen=can_reopen
+            can_reopen=can_reopen,
+            can_reject=can_reject
         )

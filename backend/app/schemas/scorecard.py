@@ -211,6 +211,7 @@ class ScorecardResponse(BaseModel):
     can_approve: bool = False
     can_close: bool = False
     can_reopen: bool = False
+    can_reject: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

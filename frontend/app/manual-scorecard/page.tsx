@@ -26,7 +26,8 @@ import TablePerformanceByPeriod from '@/components/TablePerformanceByPeriod';
 import TableCustomerCollectionPlan from '@/components/TableCustomerCollectionPlan';
 import AuditTrailModal from '@/components/AuditTrailModal';
 import ScorecardSubmissionsModal from '@/components/ScorecardSubmissionsModal';
-import { AlertCircle, CheckCircle2, Bell, FileCheck2 } from 'lucide-react';
+import ScorecardQueueDashboard from '@/components/ScorecardQueueDashboard';
+import { AlertCircle, CheckCircle2, Bell, FileCheck2, Award, ArrowLeft } from 'lucide-react';
 
 function ManualScorecardContent() {
   const searchParams = useSearchParams();
@@ -72,7 +73,10 @@ function ManualScorecardContent() {
         const paramEmp = searchParams.get('employee_id');
         const paramMonth = searchParams.get('month');
 
-        const initialEmp = paramEmp || (subs.length > 0 ? subs[0].id : profile?.id || '');
+        let initialEmp = paramEmp || '';
+        if (!initialEmp && profile?.role === 'EMPLOYEE') {
+          initialEmp = profile.id;
+        }
         const initialMonth = paramMonth || (mList.length > 0 ? mList[0] : '2026-11');
 
         setSelectedEmployeeId(initialEmp);
@@ -107,6 +111,16 @@ function ManualScorecardContent() {
       loadScorecard(selectedEmployeeId, selectedMonth);
     }
   }, [selectedEmployeeId, selectedMonth, loadScorecard]);
+
+  useEffect(() => {
+    const paramEmp = searchParams.get('employee_id');
+    if (paramEmp !== null && paramEmp !== selectedEmployeeId) {
+      setSelectedEmployeeId(paramEmp);
+    } else if (paramEmp === null && isSupervisorOrAdmin && selectedEmployeeId) {
+      setSelectedEmployeeId('');
+      setScorecard(null);
+    }
+  }, [searchParams, isSupervisorOrAdmin]);
 
   const handleEmployeeChange = (newEmpId: string) => {
     setSelectedEmployeeId(newEmpId);
@@ -266,6 +280,23 @@ function ManualScorecardContent() {
     }, 450);
   };
 
+  // If Admin / Supervisor is on the main scorecard page without selecting an employee, show the Submissions Queue
+  if (isSupervisorOrAdmin && !selectedEmployeeId) {
+    return (
+      <div className="space-y-6 pb-12">
+        <ScorecardQueueDashboard
+          onSelectEmployee={(empId, m) => {
+            setSelectedEmployeeId(empId);
+            setSelectedMonth(m);
+            router.push(`/manual-scorecard?employee_id=${empId}&month=${m}`);
+          }}
+          subordinates={subordinates}
+          availableMonths={availableMonths}
+        />
+      </div>
+    );
+  }
+
   if (loading && !scorecard) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
@@ -285,8 +316,9 @@ function ManualScorecardContent() {
     );
   }
 
+  const isReviewer = Boolean(isSupervisorOrAdmin && (profile?.id !== scorecard.employee_id));
   const isClosed = scorecard.status === 'CLOSED';
-  const isEditingDisabled = !scorecard.can_edit || isClosed;
+  const isEditingDisabled = isReviewer || !scorecard.can_edit || isClosed;
 
   return (
     <div className="space-y-6 pb-12">
@@ -310,28 +342,66 @@ function ManualScorecardContent() {
         </div>
       )}
 
-      {/* Superadmin / Supervisor Notification Banner for Submitted Scorecards */}
-      {isSupervisorOrAdmin && pendingCount > 0 && (
-        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-indigo-600 text-white rounded-2xl p-4 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-fadeIn">
+      {/* Reviewer / Evaluator Notice Banners */}
+      {isReviewer && scorecard.status === 'SUBMITTED' && (
+        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fadeIn">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-              <Bell className="w-5 h-5 text-white animate-bounce" />
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Award className="w-5 h-5 text-indigo-200" />
             </div>
             <div>
-              <h4 className="text-sm font-bold leading-tight">
-                {pendingCount} Employee Scorecard{pendingCount > 1 ? 's' : ''} Submitted & Pending Review
-              </h4>
-              <p className="text-xs text-amber-100 mt-0.5">
-                Team members have submitted their monthly scorecards. Review collections, enter sheet & call scores, and finalize marking.
+              <div className="flex items-center space-x-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950 uppercase tracking-wider">
+                  Submitted for Review
+                </span>
+                <h4 className="text-sm font-bold">
+                  Evaluating {scorecard.employee?.full_name} ({scorecard.employee?.employee_id})
+                </h4>
+              </div>
+              <p className="text-xs text-indigo-200 mt-0.5">
+                Submitted on {scorecard.submitted_at ? new Date(scorecard.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}. Review the member's figures below and scroll down to enter Quality Scoring.
               </p>
             </div>
           </div>
           <button
-            onClick={() => setShowSubmissionsModal(true)}
-            className="px-4 py-2 bg-white text-indigo-700 hover:bg-slate-100 rounded-xl text-xs font-bold shadow-sm transition shrink-0 flex items-center space-x-1.5 self-start sm:self-auto"
+            onClick={() => {
+              setSelectedEmployeeId('');
+              setScorecard(null);
+              router.push('/manual-scorecard');
+            }}
+            className="px-4 py-2 bg-white text-indigo-950 hover:bg-slate-100 rounded-xl text-xs font-bold shadow-sm transition shrink-0 flex items-center space-x-1.5 self-start sm:self-auto"
           >
-            <FileCheck2 className="w-4 h-4" />
-            <span>Review Submissions ({pendingCount})</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Submissions Queue</span>
+          </button>
+        </div>
+      )}
+
+      {isReviewer && scorecard.status === 'DRAFT' && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center shrink-0">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold leading-tight">
+                Member Scorecard in DRAFT Status
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {scorecard.employee?.full_name} has not submitted their scorecard for this month yet. Normal editing is reserved for the member until submitted.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedEmployeeId('');
+              setScorecard(null);
+              router.push('/manual-scorecard');
+            }}
+            className="px-4 py-2 bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 rounded-xl text-xs font-bold shadow-sm transition shrink-0 flex items-center space-x-1.5 self-start sm:self-auto"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Submissions Queue</span>
           </button>
         </div>
       )}
@@ -349,6 +419,7 @@ function ManualScorecardContent() {
         onApprove={() => handleStatusChange('APPROVED', 'Approve this monthly scorecard?')}
         onClose={() => handleStatusChange('CLOSED', 'Close and lock this monthly scorecard? Normal editing will be restricted.')}
         onReopen={() => handleStatusChange('DRAFT', 'Reopen this closed scorecard back to DRAFT?')}
+        onReject={() => handleStatusChange('DRAFT', 'Return this scorecard to the member for revisions? Status will revert to DRAFT.')}
         onOpenAuditLogs={() => setShowAuditModal(true)}
         isSaving={saving}
         canEdit={scorecard.can_edit}
@@ -356,6 +427,13 @@ function ManualScorecardContent() {
         canApprove={scorecard.can_approve}
         canClose={scorecard.can_close}
         canReopen={scorecard.can_reopen}
+        canReject={scorecard.can_reject}
+        isReviewer={isReviewer}
+        onBackToQueue={isSupervisorOrAdmin ? () => {
+          setSelectedEmployeeId('');
+          setScorecard(null);
+          router.push('/manual-scorecard');
+        } : undefined}
       />
 
       <AttendanceForecastCard
