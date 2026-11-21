@@ -320,12 +320,12 @@ function ScorecardPrintContent() {
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">New Sales</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Token to Booking</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">EMI</div>
-          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight font-black bg-slate-200/70">Total Lead</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Current Fair Lead</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Current FB Leads</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">HP</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">P</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none font-bold">Fup</div>
+          <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight font-black bg-slate-200/70">Total Lead</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-tight">Total Calls Dialed</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Hold</div>
           <div className="p-0.5 border-r border-black flex items-center justify-center leading-none">Cancel</div>
@@ -371,10 +371,6 @@ function ScorecardPrintContent() {
               <div className="p-0.5 border-r border-black flex items-center justify-end px-1 font-mono">
                 {p.emi_amount ? formatNumber(p.emi_amount) : ''}
               </div>
-              {/* Total Lead Column */}
-              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
-                {totalLeadVal > 0 ? formatNumber(totalLeadVal) : ''}
-              </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.fair_leads || ''}
               </div>
@@ -389,6 +385,10 @@ function ScorecardPrintContent() {
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-bold font-mono">
                 {p.fup || ''}
+              </div>
+              {/* Total Lead Column */}
+              <div className="p-0.5 border-r border-black flex items-center justify-center font-mono bg-slate-50">
+                {totalLeadVal > 0 ? formatNumber(totalLeadVal) : ''}
               </div>
               <div className="p-0.5 border-r border-black flex items-center justify-center font-mono">
                 {p.dialed_calls || ''}

@@ -486,15 +486,15 @@ export default function TablePerformanceByPeriod({
                 <td className="py-2.5 px-2.5 text-right font-extrabold text-emerald-900 bg-emerald-100/60 border-r border-emerald-300">
                   {formatBDT(achieved.total_collection)}
                 </td>
-                {/* Total Lead Summary */}
-                <td className="py-2.5 px-2 text-center font-extrabold text-indigo-900 bg-indigo-50 font-mono">
-                  {formatNumber(achieved.fair_leads + achieved.fb_leads)}
-                </td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fair_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.fb_leads)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold text-emerald-700">{formatNumber(achieved.hp)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold text-blue-700">{formatNumber(achieved.p)}</td>
-                <td className="py-2.5 px-2 text-center font-extrabold text-amber-700 border-r border-emerald-300">{formatNumber(achieved.fup)}</td>
+                <td className="py-2.5 px-2 text-center font-extrabold text-amber-700">{formatNumber(achieved.fup)}</td>
+                {/* Total Lead Summary */}
+                <td className="py-2.5 px-2 text-center font-extrabold text-indigo-900 bg-indigo-50 font-mono border-r border-emerald-300">
+                  {formatNumber(achieved.fair_leads + achieved.fb_leads)}
+                </td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.dialed_calls)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.hold)}</td>
                 <td className="py-2.5 px-2 text-center font-extrabold">{formatNumber(achieved.cancel)}</td>
